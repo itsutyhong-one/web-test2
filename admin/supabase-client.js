@@ -1,15 +1,10 @@
-// =============================================
-// Supabase 클라이언트 설정
-// =============================================
-// 1. Supabase 프로젝트 생성: https://supabase.com
-// 2. 프로젝트 Settings > API 에서 URL과 anon key 복사
-// 3. 아래 두 값을 교체하세요
+// Supabase 연결 정보는 admin/env.js 에서 주입됩니다 (gitignore 처리됨).
+// env.example.js 를 복사해 env.js 를 만들고 실제 값을 입력하세요.
 
-const SUPABASE_URL  = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL  = window.SUPABASE_URL      || '';
+const SUPABASE_ANON = window.SUPABASE_ANON_KEY || '';
 
-// Supabase가 설정되었는지 확인
-const SUPABASE_READY = SUPABASE_URL !== 'YOUR_SUPABASE_URL';
+const SUPABASE_READY = SUPABASE_URL !== '' && !SUPABASE_URL.startsWith('YOUR_');
 
 let db = null;
 if (SUPABASE_READY && typeof supabase !== 'undefined') {
