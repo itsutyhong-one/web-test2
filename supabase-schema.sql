@@ -93,12 +93,12 @@ CREATE POLICY "공개 읽기 - stations"  ON stations  FOR SELECT USING (true);
 CREATE POLICY "공개 읽기 - chargers"  ON chargers  FOR SELECT USING (true);
 CREATE POLICY "공개 읽기 - notices"   ON notices   FOR SELECT USING (status = '게시중');
 
--- 관리자 전체 권한 (service_role 또는 인증된 사용자)
-CREATE POLICY "관리자 전체권한 - stations"  ON stations  FOR ALL USING (auth.role() = 'authenticated');
-CREATE POLICY "관리자 전체권한 - chargers"  ON chargers  FOR ALL USING (auth.role() = 'authenticated');
-CREATE POLICY "관리자 전체권한 - history"   ON charging_history FOR ALL USING (auth.role() = 'authenticated');
-CREATE POLICY "관리자 전체권한 - faults"    ON faults    FOR ALL USING (auth.role() = 'authenticated');
-CREATE POLICY "관리자 전체권한 - notices"   ON notices   FOR ALL USING (auth.role() = 'authenticated');
+-- 관리자 전체 권한 (anon 키로 운영 — 추후 Auth 도입 시 교체)
+CREATE POLICY "관리자 전체권한 - stations"  ON stations  FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "관리자 전체권한 - chargers"  ON chargers  FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "관리자 전체권한 - history"   ON charging_history FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "관리자 전체권한 - faults"    ON faults    FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "관리자 전체권한 - notices"   ON notices   FOR ALL USING (true) WITH CHECK (true);
 
 -- =============================================
 -- 시드 데이터 (초기 충전소 10개소)
