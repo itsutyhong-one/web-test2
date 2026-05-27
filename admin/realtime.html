@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KDN Charge 운영시스템 — 실시간 현황</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="admin.css"/>
+  <style>
+    .realtime-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .refresh-info {
+      margin-left: auto;
+      font-size: 0.8rem;
+      color: #888;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .refresh-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #00c896;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    .station-section { margin-bottom: 24px; }
+    .station-section-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #555;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e8eaf0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .charger-detail-modal .modal { max-width: 480px; }
+  </style>
+</head>
+<body data-page="realtime">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">실시간 충전기 현황</span>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbarDate"></span>
+        <div class="topbar-user"><div class="user-avatar">관</div><span>관리자</span></div>
+      </div>
+    </div>
+
+    <div class="page-content">
+
+      <!-- 상단 요약 -->
+      <div class="stat-grid" style="grid-template-columns:repeat(5,1fr);" id="realtimeStat"></div>
+
+      <div class="realtime-header">
+        <select class="form-select" id="filterStation" style="width:220px;">
+          <option value="">전체 충전소</option>
+        </select>
+        <select class="form-select" id="filterChargerStatus" style="width:140px;">
+          <option value="">전체 상태</option>
+          <option value="available">충전 가능</option>
+          <option value="charging">충전 중</option>
+          <option value="fault">고장</option>
+          <option value="offline">오프라인</option>
+          <option value="maintenance">점검 중</option>
+        </select>
+        <button class="btn btn-secondary" onclick="renderRealtime()">필터 적용</button>
+        <div class="refresh-info">
+          <div class="refresh-dot"></div>
+          <span id="lastRefresh">-</span>에 갱신됨
+        </div>
+      </div>
+
+      <div id="realtimeContent"></div>
+    </div>
+  </div>
+
+  <!-- 충전기 상세 모달 -->
+  <div class="modal-overlay charger-detail-modal" id="chargerDetailModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="detailTitle">충전기 상세</span>
+        <button class="modal-close" onclick="document.getElementById('chargerDetailModal').classList.remove('open')">✕</button>
+      </div>
+      <div id="detailContent"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('chargerDetailModal').classList.remove('open')">닫기</button>
+        <button class="btn btn-danger" id="detailFaultBtn">고장 등록</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+  <script>
+    function renderStat() {
+      const total = CHARGERS.length;
+      const counts = {
+        available: CHARGERS.filter(c=>c.status==='available').length,
+        charging: CHARGERS.filter(c=>c.status==='charging').length,
+        fault: CHARGERS.filter(c=>c.status==='fault').length,
+        offline: CHARGERS.filter(c=>c.status==='offline').length,
+        maintenance: CHARGERS.filter(c=>c.status==='maintenance').length,
+      };
+      document.getElementById('realtimeStat').innerHTML = `
+        <div class="stat-card"><div class="stat-card-icon blue">⚡</div><div><div class="stat-card-num">${total}</div><div class="stat-card-label">전체 충전기</div></div></div>
+        <div class="stat-card"><div class="stat-card-icon green">✅</div><div><div class="stat-card-num">${counts.available}</div><div class="stat-card-label">충전 가능</div></div></div>
+        <div class="stat-card"><div class="stat-card-icon blue">🔌</div><div><div class="stat-card-num">${counts.charging}</div><div class="stat-card-label">충전 중</div></div></div>
+        <div class="stat-card"><div class="stat-card-icon red">🚨</div><div><div class="stat-card-num">${counts.fault}</div><div class="stat-card-label">고장</div></div></div>
+        <div class="stat-card"><div class="stat-card-icon orange">📴</div><div><div class="stat-card-num">${counts.offline + counts.maintenance}</div><div class="stat-card-label">오프라인/점검</div></div></div>
+      `;
+    }
+
+    function renderRealtime() {
+      const stFilter = document.getElementById('filterStation').value;
+      const stFilter2 = document.getElementById('filterChargerStatus').value;
+      const content = document.getElementById('realtimeContent');
+
+      // 충전소별로 그룹핑
+      const stations = stFilter ? STATIONS.filter(s => s.id === stFilter) : STATIONS;
+
+      content.innerHTML = stations.map(st => {
+        let chargers = CHARGERS.filter(c => c.stationId === st.id);
+        if (stFilter2) chargers = chargers.filter(c => c.status === stFilter2);
+        if (chargers.length === 0) return '';
+
+        return `<div class="station-section">
+          <div class="station-section-title">
+            📍 ${st.name}
+            <span style="font-size:0.78rem;font-weight:400;color:#aaa;">${st.address}</span>
+            <span style="margin-left:auto;font-size:0.78rem;color:#888;">${chargers.length}대</span>
+          </div>
+          <div class="realtime-grid">
+            ${chargers.map(c => `
+              <div class="charger-tile ${c.status}" onclick="showDetail('${c.id}')">
+                <div class="charger-tile-icon">${c.status==='charging'?'🔌':c.status==='fault'?'⚠️':c.status==='offline'?'📴':c.status==='maintenance'?'🔧':'✅'}</div>
+                <div class="charger-tile-id">${c.id}</div>
+                <div class="charger-tile-name">${c.port}</div>
+                <div class="charger-tile-power">${c.type}</div>
+                ${statusBadge(c.status)}
+                ${c.status === 'charging' ? `
+                  <div style="margin-top:8px;font-size:0.75rem;color:#555;">${c.connectedVehicle || ''}</div>
+                  <div class="charging-progress">
+                    <div class="charging-progress-bar" style="width:${c.chargePercent}%"></div>
+                  </div>
+                  <div style="font-size:0.72rem;color:#2563eb;margin-top:3px;">${c.chargePercent}% 충전됨</div>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      }).join('');
+
+      document.getElementById('lastRefresh').textContent =
+        new Date().toLocaleTimeString('ko-KR');
+    }
+
+    function showDetail(chargerId) {
+      const c = CHARGERS.find(ch => ch.id === chargerId);
+      if (!c) return;
+      document.getElementById('detailTitle').textContent = `${c.id} — ${c.port}`;
+      document.getElementById('detailContent').innerHTML = `
+        <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+          <tr><td style="padding:8px 0;color:#888;width:120px;">충전소</td><td><strong>${c.stationName}</strong></td></tr>
+          <tr><td style="padding:8px 0;color:#888;">충전기 ID</td><td style="font-family:monospace;">${c.id}</td></tr>
+          <tr><td style="padding:8px 0;color:#888;">포트</td><td>${c.port}</td></tr>
+          <tr><td style="padding:8px 0;color:#888;">충전 유형</td><td>${c.type}</td></tr>
+          <tr><td style="padding:8px 0;color:#888;">현재 상태</td><td>${statusBadge(c.status)}</td></tr>
+          ${c.status === 'charging' ? `
+            <tr><td style="padding:8px 0;color:#888;">충전 차량</td><td>${c.connectedVehicle}</td></tr>
+            <tr><td style="padding:8px 0;color:#888;">충전 진행률</td><td>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="flex:1;height:10px;background:#e8eaf0;border-radius:5px;overflow:hidden;">
+                  <div style="height:100%;width:${c.chargePercent}%;background:#2563eb;border-radius:5px;"></div>
+                </div>
+                <strong>${c.chargePercent}%</strong>
+              </div>
+            </td></tr>
+          ` : ''}
+          <tr><td style="padding:8px 0;color:#888;">최근 갱신</td><td>${formatDate(c.lastUpdate)}</td></tr>
+        </table>
+      `;
+      document.getElementById('detailFaultBtn').onclick = () => {
+        window.location.href = `fault.html?chargerId=${c.id}`;
+      };
+      document.getElementById('chargerDetailModal').classList.add('open');
+    }
+
+    // 충전소 드롭다운 초기화
+    document.addEventListener('DOMContentLoaded', () => {
+      const sel = document.getElementById('filterStation');
+      STATIONS.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.name;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener('change', renderRealtime);
+      document.getElementById('filterChargerStatus').addEventListener('change', renderRealtime);
+      renderStat();
+      renderRealtime();
+
+      // 30초마다 자동 갱신 (실제 운영 시 Supabase realtime subscription으로 대체)
+      setInterval(() => {
+        renderStat();
+        renderRealtime();
+      }, 30000);
+    });
+  </script>
+</body>
+</html>

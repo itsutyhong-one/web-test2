@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KDN Charge 운영시스템 — 충전 내역</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="admin.css"/>
+</head>
+<body data-page="history">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">충전 내역</span>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbarDate"></span>
+        <div class="topbar-user"><div class="user-avatar">관</div><span>관리자</span></div>
+      </div>
+    </div>
+
+    <div class="page-content">
+
+      <!-- 요약 카드 -->
+      <div class="stat-grid" id="historyStat" style="margin-bottom:20px;"></div>
+
+      <!-- 필터 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">충전 내역 조회 (<span id="historyCount">0</span>건)</span>
+          <button class="btn btn-secondary btn-sm" onclick="exportCSV()">CSV 내보내기</button>
+        </div>
+        <div class="filter-bar">
+          <input class="form-input" id="searchHistory" type="text" placeholder="충전소명 / 차량번호 검색"/>
+          <select class="form-select" id="filterStation" style="min-width:180px;">
+            <option value="">전체 충전소</option>
+          </select>
+          <select class="form-select" id="filterMember">
+            <option value="">전체 회원유형</option>
+            <option>비회원</option>
+            <option>일반회원</option>
+            <option>프리미엄</option>
+          </select>
+          <input class="form-input" id="filterDateFrom" type="date" style="width:140px;"/>
+          <span style="font-size:0.85rem;color:#888;">~</span>
+          <input class="form-input" id="filterDateTo" type="date" style="width:140px;"/>
+          <button class="btn btn-primary" onclick="renderHistory()">검색</button>
+          <button class="btn btn-secondary" onclick="resetFilter()">초기화</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>내역 ID</th>
+                <th>충전소</th>
+                <th>충전기 ID</th>
+                <th>차량번호</th>
+                <th>시작 시각</th>
+                <th>충전 시간</th>
+                <th>충전량(kWh)</th>
+                <th>결제 금액</th>
+                <th>회원유형</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+  <script>
+    const PAGE_SIZE = 15;
+    let currentPage = 1;
+    let filtered = [...HISTORY];
+
+    function renderStat() {
+      const totalKwh = filtered.reduce((s, h) => s + h.kwh, 0).toFixed(1);
+      const totalAmt = filtered.reduce((s, h) => s + h.amount, 0);
+      document.getElementById('historyStat').innerHTML = `
+        <div class="stat-card"><div class="stat-card-icon blue">📋</div><div><div class="stat-card-num">${filtered.length}</div><div class="stat-card-label">총 충전 건수</div></div></div>
+        <div class="stat-card"><div class="stat-card-icon green">⚡</div><div><div class="stat-card-num">${totalKwh}</div><div class="stat-card-label">총 충전량(kWh)</div></div></div>
+        <div class="stat-card"><div class="stat-card-icon orange">💰</div><div><div class="stat-card-num">${(totalAmt/10000).toFixed(0)}만</div><div class="stat-card-label">총 결제 금액(원)</div></div></div>
+        <div class="stat-card"><div class="stat-card-icon red">👥</div><div><div class="stat-card-num">${filtered.filter(h=>h.memberType!=='비회원').length}</div><div class="stat-card-label">회원 충전 건수</div></div></div>
+      `;
+    }
+
+    function renderHistory() {
+      const search = document.getElementById('searchHistory').value.toLowerCase();
+      const station = document.getElementById('filterStation').value;
+      const member = document.getElementById('filterMember').value;
+      const from = document.getElementById('filterDateFrom').value;
+      const to = document.getElementById('filterDateTo').value;
+
+      filtered = HISTORY.filter(h => {
+        if (search && !h.stationName.toLowerCase().includes(search) && !h.vehicle.toLowerCase().includes(search)) return false;
+        if (station && h.stationName !== station) return false;
+        if (member && h.memberType !== member) return false;
+        if (from && h.startTime < from) return false;
+        if (to && h.startTime > to + 'T23:59:59') return false;
+        return true;
+      });
+
+      currentPage = 1;
+      document.getElementById('historyCount').textContent = filtered.length;
+      renderStat();
+      renderPage();
+    }
+
+    function renderPage() {
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const pageData = filtered.slice(start, start + PAGE_SIZE);
+      document.getElementById('historyTableBody').innerHTML = pageData.map(h => `
+        <tr>
+          <td style="font-family:monospace;font-size:0.78rem;">${h.id}</td>
+          <td style="font-size:0.85rem;">${h.stationName}</td>
+          <td style="font-family:monospace;font-size:0.78rem;">${h.chargerId}</td>
+          <td>${h.vehicle}</td>
+          <td style="font-size:0.82rem;">${formatDate(h.startTime)}</td>
+          <td>${h.duration}분</td>
+          <td><strong>${h.kwh}</strong></td>
+          <td><strong>${formatKrw(h.amount)}</strong></td>
+          <td>
+            <span style="background:${h.memberType==='프리미엄'?'rgba(0,200,150,0.1)':h.memberType==='일반회원'?'rgba(37,99,235,0.1)':'#f0f2f7'};
+                         color:${h.memberType==='프리미엄'?'#00a87a':h.memberType==='일반회원'?'#2563eb':'#888'};
+                         padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:600;">
+              ${h.memberType}
+            </span>
+          </td>
+        </tr>
+      `).join('');
+
+      // 페이지네이션
+      const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+      const pag = document.getElementById('pagination');
+      if (totalPages <= 1) { pag.innerHTML = ''; return; }
+      let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage===1?'disabled':''}>‹</button>`;
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+          html += `<button class="page-btn${i===currentPage?' active':''}" onclick="goPage(${i})">${i}</button>`;
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+          html += `<span style="padding:0 4px;color:#ccc;">…</span>`;
+        }
+      }
+      html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>›</button>`;
+      pag.innerHTML = html;
+    }
+
+    function goPage(p) {
+      const total = Math.ceil(filtered.length / PAGE_SIZE);
+      if (p < 1 || p > total) return;
+      currentPage = p;
+      renderPage();
+    }
+
+    function resetFilter() {
+      document.getElementById('searchHistory').value = '';
+      document.getElementById('filterStation').value = '';
+      document.getElementById('filterMember').value = '';
+      document.getElementById('filterDateFrom').value = '';
+      document.getElementById('filterDateTo').value = '';
+      filtered = [...HISTORY];
+      renderHistory();
+    }
+
+    function exportCSV() {
+      const header = ['내역ID', '충전소', '충전기ID', '차량번호', '시작시각', '충전시간(분)', '충전량(kWh)', '금액(원)', '회원유형'];
+      const rows = filtered.map(h => [h.id, h.stationName, h.chargerId, h.vehicle, formatDate(h.startTime), h.duration, h.kwh, h.amount, h.memberType]);
+      const csv = [header, ...rows].map(r => r.join(',')).join('\n');
+      const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `charging_history_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const sel = document.getElementById('filterStation');
+      STATIONS.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.name;
+        opt.textContent = s.name;
+        sel.appendChild(opt);
+      });
+      renderHistory();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KDN Charge 운영시스템 — 공지사항 관리</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="admin.css"/>
+  <style>
+    .notice-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 20px;
+      align-items: start;
+    }
+    .notice-cat {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .cat-공지 { background:#e8f0ff;color:#2563eb; }
+    .cat-이벤트 { background:#fef3e8;color:#d97706; }
+    .cat-점검 { background:#f0fdf4;color:#16a34a; }
+    .notice-pub-badge {
+      padding: 2px 8px;
+      border-radius: 100px;
+      font-size: 0.73rem;
+      font-weight: 700;
+    }
+    .pub-게시중 { background:#e8faf3;color:#00a87a; }
+    .pub-예약 { background:#fff8e8;color:#d97706; }
+    .pub-미게시 { background:#f0f2f7;color:#888; }
+    @media(max-width:960px) { .notice-layout { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body data-page="notices">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">공지사항 관리</span>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbarDate"></span>
+        <div class="topbar-user"><div class="user-avatar">관</div><span>관리자</span></div>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="notice-layout">
+
+        <!-- 공지 작성 폼 -->
+        <div>
+          <div class="card" id="noticeFormCard" style="position:sticky;top:80px;">
+            <div class="card-header">
+              <span class="card-title" id="formTitle">📢 공지사항 새 글 작성</span>
+              <button class="btn btn-sm btn-secondary" onclick="resetNoticeForm()">새 글 쓰기</button>
+            </div>
+            <div class="card-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">카테고리<span class="required">*</span></label>
+                  <select class="form-select" id="noticeCategory">
+                    <option>공지</option>
+                    <option>이벤트</option>
+                    <option>점검</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">게시 상태<span class="required">*</span></label>
+                  <select class="form-select" id="noticeStatus">
+                    <option value="게시중">즉시 게시</option>
+                    <option value="예약">예약 게시</option>
+                    <option value="미게시">임시 저장</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group" id="scheduleGroup" style="display:none;">
+                <label class="form-label">예약 게시 일시</label>
+                <input class="form-input" id="noticeSchedule" type="datetime-local"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">제목<span class="required">*</span></label>
+                <input class="form-input" id="noticeTitle" placeholder="공지사항 제목을 입력하세요"/>
+              </div>
+              <div class="form-group">
+                <label class="form-label">내용<span class="required">*</span></label>
+                <div class="editor-toolbar">
+                  <button onclick="execCmd('bold')"><b>B</b></button>
+                  <button onclick="execCmd('italic')"><i>I</i></button>
+                  <button onclick="execCmd('underline')"><u>U</u></button>
+                  <button onclick="execCmd('insertUnorderedList')">• 목록</button>
+                  <button onclick="execCmd('insertOrderedList')">1. 목록</button>
+                  <button onclick="execCmd('formatBlock','h3')">H3</button>
+                  <button onclick="execCmd('removeFormat')">초기화</button>
+                </div>
+                <div class="editor-content" id="noticeContent" contenteditable="true"></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:6px;font-size:0.85rem;">
+                  <input type="checkbox" id="noticeTop" style="width:16px;height:16px;"/>
+                  <label for="noticeTop">대민 페이지 상단 고정</label>
+                </div>
+                <div style="margin-left:auto;display:flex;gap:10px;">
+                  <button class="btn btn-secondary" onclick="saveDraft()">임시저장</button>
+                  <button class="btn btn-primary" onclick="submitNotice()" id="noticeSubmitBtn">게시하기</button>
+                </div>
+              </div>
+              <div id="editingId" style="display:none;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 공지 목록 -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">공지 목록 (<span id="noticeCount">0</span>건)</span>
+            <div style="display:flex;gap:8px;">
+              <select class="form-select" id="filterNoticeStatus" style="width:110px;padding:6px 10px;font-size:0.82rem;" onchange="renderNotices()">
+                <option value="">전체</option>
+                <option>게시중</option>
+                <option>예약</option>
+                <option>미게시</option>
+              </select>
+              <select class="form-select" id="filterNoticeCategory" style="width:100px;padding:6px 10px;font-size:0.82rem;" onchange="renderNotices()">
+                <option value="">전체 카테고리</option>
+                <option>공지</option>
+                <option>이벤트</option>
+                <option>점검</option>
+              </select>
+            </div>
+          </div>
+          <div id="noticeListContent"></div>
+          <div style="padding:16px 20px;background:#e8faf3;border-top:1px solid #d0f0e0;">
+            <div style="font-size:0.82rem;color:#00a87a;">
+              ℹ️ <strong>게시중</strong> 상태의 공지사항은 대민 홈페이지 공지사항 섹션에 자동 반영됩니다.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 공지 상세 미리보기 모달 -->
+  <div class="modal-overlay" id="noticePreviewModal">
+    <div class="modal" style="max-width:700px;">
+      <div class="modal-header">
+        <span class="modal-title">공지 미리보기</span>
+        <button class="modal-close" onclick="document.getElementById('noticePreviewModal').classList.remove('open')">✕</button>
+      </div>
+      <div id="noticePreviewContent" style="padding:16px 0;"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="document.getElementById('noticePreviewModal').classList.remove('open')">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+  <script>
+    const localNotices = [...NOTICES];
+    let editingId = null;
+
+    function execCmd(cmd, val) {
+      document.getElementById('noticeContent').focus();
+      document.execCommand(cmd, false, val || null);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('noticeStatus').addEventListener('change', function() {
+        document.getElementById('scheduleGroup').style.display =
+          this.value === '예약' ? '' : 'none';
+      });
+      renderNotices();
+    });
+
+    function renderNotices() {
+      const statusF = document.getElementById('filterNoticeStatus').value;
+      const catF = document.getElementById('filterNoticeCategory').value;
+      const items = localNotices.filter(n =>
+        (!statusF || n.status === statusF) &&
+        (!catF || n.category === catF)
+      );
+      document.getElementById('noticeCount').textContent = items.length;
+
+      document.getElementById('noticeListContent').innerHTML = items.length === 0
+        ? '<div style="text-align:center;padding:40px;color:#aaa;">공지사항이 없습니다.</div>'
+        : items.map(n => `
+          <div style="padding:14px 20px;border-bottom:1px solid #f0f2f7;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+              <span class="notice-cat cat-${n.category}">${n.category}</span>
+              <span class="notice-pub-badge pub-${n.status}">${n.status}</span>
+              <strong style="font-size:0.9rem;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n.title}</strong>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#aaa;">
+              <span>${n.author}</span>
+              <span>·</span>
+              <span>${n.createdAt}</span>
+              <div style="margin-left:auto;display:flex;gap:6px;">
+                <button class="btn btn-sm btn-secondary" onclick="previewNotice('${n.id}')">미리보기</button>
+                <button class="btn btn-sm btn-outline" onclick="editNotice('${n.id}')">수정</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteNotice('${n.id}')">삭제</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+    }
+
+    function resetNoticeForm() {
+      editingId = null;
+      document.getElementById('formTitle').textContent = '📢 공지사항 새 글 작성';
+      document.getElementById('noticeSubmitBtn').textContent = '게시하기';
+      document.getElementById('noticeTitle').value = '';
+      document.getElementById('noticeContent').innerHTML = '';
+      document.getElementById('noticeCategory').value = '공지';
+      document.getElementById('noticeStatus').value = '게시중';
+      document.getElementById('noticeTop').checked = false;
+      document.getElementById('scheduleGroup').style.display = 'none';
+    }
+
+    function editNotice(id) {
+      const n = localNotices.find(x => x.id === id);
+      if (!n) return;
+      editingId = id;
+      document.getElementById('formTitle').textContent = '✏️ 공지사항 수정';
+      document.getElementById('noticeSubmitBtn').textContent = '수정 완료';
+      document.getElementById('noticeTitle').value = n.title;
+      document.getElementById('noticeContent').innerHTML = n.content;
+      document.getElementById('noticeCategory').value = n.category;
+      document.getElementById('noticeStatus').value = n.status;
+      document.getElementById('noticeFormCard').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function deleteNotice(id) {
+      if (!confirm('이 공지사항을 삭제하시겠습니까?')) return;
+      const idx = localNotices.findIndex(x => x.id === id);
+      if (idx !== -1) localNotices.splice(idx, 1);
+      // TODO: Supabase DELETE
+      renderNotices();
+      showToast('공지사항이 삭제되었습니다.');
+    }
+
+    function previewNotice(id) {
+      const n = localNotices.find(x => x.id === id);
+      if (!n) return;
+      document.getElementById('noticePreviewContent').innerHTML = `
+        <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;">
+          <span class="notice-cat cat-${n.category}">${n.category}</span>
+          <span class="notice-pub-badge pub-${n.status}">${n.status}</span>
+        </div>
+        <h2 style="font-size:1.2rem;font-weight:700;margin-bottom:8px;">${n.title}</h2>
+        <div style="font-size:0.82rem;color:#888;margin-bottom:20px;border-bottom:1px solid #eee;padding-bottom:12px;">${n.author} · ${n.createdAt}</div>
+        <div style="line-height:1.8;font-size:0.95rem;">${n.content}</div>
+      `;
+      document.getElementById('noticePreviewModal').classList.add('open');
+    }
+
+    function saveDraft() {
+      const title = document.getElementById('noticeTitle').value.trim();
+      const content = document.getElementById('noticeContent').innerHTML.trim();
+      if (!title) { showToast('제목을 입력해주세요.', 'error'); return; }
+      saveNoticeData('미게시');
+      showToast('임시저장 되었습니다.');
+    }
+
+    function submitNotice() {
+      const title = document.getElementById('noticeTitle').value.trim();
+      const content = document.getElementById('noticeContent').innerHTML.trim();
+      if (!title || !content) { showToast('제목과 내용을 모두 입력해주세요.', 'error'); return; }
+      const status = document.getElementById('noticeStatus').value;
+      saveNoticeData(status);
+      showToast(editingId ? '공지사항이 수정되었습니다.' : '공지사항이 게시되었습니다.');
+      resetNoticeForm();
+    }
+
+    function saveNoticeData(status) {
+      const title = document.getElementById('noticeTitle').value.trim();
+      const content = document.getElementById('noticeContent').innerHTML.trim();
+      const category = document.getElementById('noticeCategory').value;
+      const today = new Date().toISOString().slice(0, 10);
+
+      if (editingId) {
+        // TODO: Supabase UPDATE
+        const n = localNotices.find(x => x.id === editingId);
+        if (n) { n.title = title; n.content = content; n.category = category; n.status = status; }
+      } else {
+        // TODO: Supabase INSERT
+        localNotices.unshift({
+          id: 'NTC' + String(localNotices.length + 1).padStart(3, '0'),
+          title, category, status,
+          author: '관리자',
+          createdAt: today,
+          content,
+        });
+      }
+      renderNotices();
+    }
+  </script>
+</body>
+</html>

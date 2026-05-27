@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KDN Charge 운영시스템 — 고장 등록</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="admin.css"/>
+  <style>
+    .fault-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 20px;
+      align-items: start;
+    }
+    .fault-status-badge {
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .status-접수 { background:#fff8e8;color:#d97706; }
+    .status-처리중 { background:#e8f0ff;color:#2563eb; }
+    .status-완료 { background:#e8faf3;color:#00a87a; }
+    @media(max-width:900px) { .fault-layout { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body data-page="fault">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">고장 등록 / 관리</span>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbarDate"></span>
+        <div class="topbar-user"><div class="user-avatar">관</div><span>관리자</span></div>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="fault-layout">
+
+        <!-- 고장 등록 폼 -->
+        <div class="card" style="position:sticky;top:80px;">
+          <div class="card-header">
+            <span class="card-title">🔧 고장 신규 등록</span>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label">충전소 선택<span class="required">*</span></label>
+              <select class="form-select" id="faultStation" onchange="onStationChange()">
+                <option value="">충전소를 선택하세요</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">충전기 선택<span class="required">*</span></label>
+              <select class="form-select" id="faultCharger">
+                <option value="">충전소를 먼저 선택하세요</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">고장 유형<span class="required">*</span></label>
+              <select class="form-select" id="faultType">
+                <option>통신 오류</option>
+                <option>커넥터 불량</option>
+                <option>전원 이상</option>
+                <option>결제 오류</option>
+                <option>화면 불량</option>
+                <option>냉각 시스템 이상</option>
+                <option>충전 중단</option>
+                <option>기타</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">긴급도<span class="required">*</span></label>
+              <div class="fault-severity">
+                <input type="radio" name="severity" id="sevLow" value="low" class="severity-opt low"/>
+                <label for="sevLow" class="severity-label low">경미</label>
+                <input type="radio" name="severity" id="sevMed" value="medium" class="severity-opt medium" checked/>
+                <label for="sevMed" class="severity-label medium">보통</label>
+                <input type="radio" name="severity" id="sevHigh" value="high" class="severity-opt high"/>
+                <label for="sevHigh" class="severity-label high">긴급</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">증상 설명<span class="required">*</span></label>
+              <textarea class="form-textarea" id="faultDesc" placeholder="고장 증상을 상세히 입력해주세요.&#10;예: 충전 시작 후 2분 내 연결 끊김, 오류 코드 E-503 표시" style="min-height:100px;"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">현장 조치 내용 (선택)</label>
+              <textarea class="form-textarea" id="faultAction" placeholder="현장에서 이미 조치한 내용이 있다면 입력하세요." style="min-height:70px;"></textarea>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:10px;">
+              <button class="btn btn-secondary" onclick="resetFaultForm()">초기화</button>
+              <button class="btn btn-primary" onclick="submitFault()">고장 등록</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 고장 내역 목록 -->
+        <div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">고장 내역 (<span id="faultCount">0</span>건)</span>
+              <div style="display:flex;gap:8px;">
+                <select class="form-select" id="filterFaultStatus" style="width:110px;padding:6px 10px;font-size:0.82rem;" onchange="renderFaultList()">
+                  <option value="">전체</option>
+                  <option>접수</option>
+                  <option>처리중</option>
+                  <option>완료</option>
+                </select>
+              </div>
+            </div>
+            <div id="faultListContent"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 고장 상세 모달 -->
+  <div class="modal-overlay" id="faultDetailModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="faultDetailTitle">고장 상세</span>
+        <button class="modal-close" onclick="document.getElementById('faultDetailModal').classList.remove('open')">✕</button>
+      </div>
+      <div id="faultDetailContent"></div>
+      <div class="modal-footer" id="faultDetailFooter">
+        <button class="btn btn-secondary" onclick="document.getElementById('faultDetailModal').classList.remove('open')">닫기</button>
+        <button class="btn btn-primary" id="faultStatusBtn">처리중으로 변경</button>
+        <button class="btn btn-outline" id="faultDoneBtn">완료 처리</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+  <script>
+    const localFaults = [...FAULTS];
+
+    function renderFaultList() {
+      const statusFilter = document.getElementById('filterFaultStatus').value;
+      const items = statusFilter ? localFaults.filter(f => f.status === statusFilter) : localFaults;
+      document.getElementById('faultCount').textContent = items.length;
+
+      document.getElementById('faultListContent').innerHTML = items.length === 0
+        ? '<div style="text-align:center;padding:40px;color:#aaa;">등록된 고장 내역이 없습니다.</div>'
+        : items.map(f => `
+          <div style="padding:16px 20px;border-bottom:1px solid #f0f2f7;cursor:pointer;" onclick="showFaultDetail('${f.id}')">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <span class="badge ${f.severity==='high'?'badge-fault':f.severity==='medium'?'badge-maintenance':'badge-offline'}">
+                ${f.severity==='high'?'긴급':f.severity==='medium'?'보통':'경미'}
+              </span>
+              <strong style="font-size:0.9rem;">${f.stationName}</strong>
+              <span class="fault-status-badge status-${f.status}">${f.status}</span>
+              <span style="margin-left:auto;font-size:0.75rem;color:#aaa;">${f.reportedAt}</span>
+            </div>
+            <div style="font-size:0.82rem;color:#555;">${f.chargerId} · ${f.type}</div>
+            <div style="font-size:0.8rem;color:#888;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.desc}</div>
+          </div>
+        `).join('');
+    }
+
+    function showFaultDetail(id) {
+      const f = localFaults.find(x => x.id === id);
+      if (!f) return;
+      document.getElementById('faultDetailTitle').textContent = `${f.id} — ${f.type}`;
+      document.getElementById('faultDetailContent').innerHTML = `
+        <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+          <tr><td style="padding:8px 0;color:#888;width:100px;">충전소</td><td><strong>${f.stationName}</strong></td></tr>
+          <tr><td style="padding:8px 0;color:#888;">충전기 ID</td><td style="font-family:monospace;">${f.chargerId}</td></tr>
+          <tr><td style="padding:8px 0;color:#888;">고장 유형</td><td>${f.type}</td></tr>
+          <tr><td style="padding:8px 0;color:#888;">긴급도</td><td>
+            <span class="badge ${f.severity==='high'?'badge-fault':f.severity==='medium'?'badge-maintenance':'badge-offline'}">
+              ${f.severity==='high'?'긴급':f.severity==='medium'?'보통':'경미'}
+            </span>
+          </td></tr>
+          <tr><td style="padding:8px 0;color:#888;">접수 상태</td><td><span class="fault-status-badge status-${f.status}">${f.status}</span></td></tr>
+          <tr><td style="padding:8px 0;color:#888;">접수 시각</td><td>${f.reportedAt}</td></tr>
+          <tr><td style="padding:8px 0;color:#888;vertical-align:top;padding-top:12px;">증상 설명</td><td style="line-height:1.6;">${f.desc}</td></tr>
+        </table>
+      `;
+      document.getElementById('faultStatusBtn').onclick = () => {
+        f.status = '처리중';
+        document.getElementById('faultDetailModal').classList.remove('open');
+        renderFaultList();
+        showToast('처리중으로 변경되었습니다.');
+      };
+      document.getElementById('faultDoneBtn').onclick = () => {
+        f.status = '완료';
+        document.getElementById('faultDetailModal').classList.remove('open');
+        renderFaultList();
+        showToast('완료 처리되었습니다.');
+      };
+      document.getElementById('faultDetailModal').classList.add('open');
+    }
+
+    function onStationChange() {
+      const stId = document.getElementById('faultStation').value;
+      const chargerSel = document.getElementById('faultCharger');
+      chargerSel.innerHTML = '<option value="">충전기를 선택하세요</option>';
+      if (!stId) return;
+      CHARGERS.filter(c => c.stationId === stId).forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = `${c.id} — ${c.port} (${c.type})`;
+        chargerSel.appendChild(opt);
+      });
+    }
+
+    function resetFaultForm() {
+      document.getElementById('faultStation').value = '';
+      document.getElementById('faultCharger').innerHTML = '<option value="">충전소를 먼저 선택하세요</option>';
+      document.getElementById('faultType').value = '통신 오류';
+      document.getElementById('sevMed').checked = true;
+      document.getElementById('faultDesc').value = '';
+      document.getElementById('faultAction').value = '';
+    }
+
+    function submitFault() {
+      const stId = document.getElementById('faultStation').value;
+      const chId = document.getElementById('faultCharger').value;
+      const type = document.getElementById('faultType').value;
+      const severity = document.querySelector('input[name="severity"]:checked').value;
+      const desc = document.getElementById('faultDesc').value.trim();
+
+      if (!stId || !chId || !desc) {
+        showToast('충전소, 충전기, 증상 설명은 필수입니다.', 'error');
+        return;
+      }
+
+      const st = STATIONS.find(s => s.id === stId);
+      const newId = 'FLT' + String(localFaults.length + 1).padStart(3, '0');
+      const now = new Date().toLocaleString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }).replace(/\. /g, '-').replace('.', '');
+
+      // TODO: Supabase INSERT into faults table
+      localFaults.unshift({
+        id: newId,
+        chargerId: chId,
+        stationName: st.name,
+        type,
+        severity,
+        status: '접수',
+        reportedAt: now,
+        desc,
+      });
+
+      // 충전기 상태 → 고장으로 변경
+      const charger = CHARGERS.find(c => c.id === chId);
+      if (charger) charger.status = 'fault';
+
+      resetFaultForm();
+      renderFaultList();
+      showToast(`고장이 접수되었습니다. (${newId})`);
+    }
+
+    // URL 파라미터로 충전기 ID 자동 선택
+    function initFromURL() {
+      const params = new URLSearchParams(location.search);
+      const chId = params.get('chargerId');
+      if (!chId) return;
+      const charger = CHARGERS.find(c => c.id === chId);
+      if (!charger) return;
+      document.getElementById('faultStation').value = charger.stationId;
+      onStationChange();
+      setTimeout(() => {
+        document.getElementById('faultCharger').value = chId;
+      }, 50);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const sel = document.getElementById('faultStation');
+      STATIONS.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.name;
+        sel.appendChild(opt);
+      });
+      renderFaultList();
+      initFromURL();
+    });
+  </script>
+</body>
+</html>

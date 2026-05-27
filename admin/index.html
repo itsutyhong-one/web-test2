@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KDN Charge 운영시스템 — 대시보드</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="admin.css"/>
+</head>
+<body data-page="dashboard">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">대시보드</span>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbarDate"></span>
+        <div class="topbar-user">
+          <div class="user-avatar">관</div>
+          <span>관리자</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-content">
+
+      <!-- 통계 카드 -->
+      <div class="stat-grid" id="statGrid"></div>
+
+      <!-- 2열 레이아웃 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+
+        <!-- 충전기 상태 요약 -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">충전기 상태 요약</span>
+            <a href="realtime.html" class="btn btn-sm btn-secondary">전체보기</a>
+          </div>
+          <div class="card-body" id="statusSummary"></div>
+        </div>
+
+        <!-- 최근 고장 접수 -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">최근 고장 접수</span>
+            <a href="fault.html" class="btn btn-sm btn-secondary">전체보기</a>
+          </div>
+          <div class="card-body" id="recentFaults" style="padding:0;"></div>
+        </div>
+
+      </div>
+
+      <!-- 오늘 충전 내역 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">최근 충전 내역 (최신 10건)</span>
+          <a href="history.html" class="btn btn-sm btn-secondary">전체보기</a>
+        </div>
+        <div class="table-wrap">
+          <table id="recentHistoryTable">
+            <thead>
+              <tr>
+                <th>충전소</th>
+                <th>충전기 ID</th>
+                <th>차량번호</th>
+                <th>시작 시각</th>
+                <th>충전량(kWh)</th>
+                <th>결제 금액</th>
+                <th>회원유형</th>
+              </tr>
+            </thead>
+            <tbody id="recentHistoryBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 통계 카드
+      const totalChargers = CHARGERS.length;
+      const availableCount = CHARGERS.filter(c => c.status === 'available').length;
+      const chargingCount = CHARGERS.filter(c => c.status === 'charging').length;
+      const faultCount = CHARGERS.filter(c => c.status === 'fault').length;
+
+      document.getElementById('statGrid').innerHTML = `
+        <div class="stat-card">
+          <div class="stat-card-icon green">📍</div>
+          <div class="stat-card-info">
+            <div class="stat-card-num">${STATIONS.length}</div>
+            <div class="stat-card-label">전체 충전소</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon blue">⚡</div>
+          <div class="stat-card-info">
+            <div class="stat-card-num">${totalChargers}</div>
+            <div class="stat-card-label">전체 충전기</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon orange">🔌</div>
+          <div class="stat-card-info">
+            <div class="stat-card-num">${chargingCount}</div>
+            <div class="stat-card-label">현재 충전 중</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon red">🚨</div>
+          <div class="stat-card-info">
+            <div class="stat-card-num">${faultCount}</div>
+            <div class="stat-card-label">고장 충전기</div>
+          </div>
+        </div>
+      `;
+
+      // 상태 요약 도넛
+      const statusData = [
+        { label: '충전 가능', count: availableCount, cls: 'badge-available', color: '#00c896' },
+        { label: '충전 중', count: chargingCount, cls: 'badge-charging', color: '#2563eb' },
+        { label: '고장', count: faultCount, cls: 'badge-fault', color: '#e74c3c' },
+        { label: '오프라인', count: CHARGERS.filter(c=>c.status==='offline').length, cls: 'badge-offline', color: '#999' },
+        { label: '점검 중', count: CHARGERS.filter(c=>c.status==='maintenance').length, cls: 'badge-maintenance', color: '#d97706' },
+      ];
+      document.getElementById('statusSummary').innerHTML = statusData.map(s => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0;">
+          <span class="badge ${s.cls}">${s.label}</span>
+          <div style="flex:1;margin:0 12px;height:8px;background:#f0f2f7;border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:${Math.round(s.count/totalChargers*100)}%;background:${s.color};border-radius:4px;"></div>
+          </div>
+          <strong style="min-width:40px;text-align:right;font-size:0.9rem;">${s.count}대</strong>
+        </div>
+      `).join('');
+
+      // 최근 고장
+      document.getElementById('recentFaults').innerHTML = FAULTS.slice(0,3).map(f => `
+        <div style="padding:14px 20px;border-bottom:1px solid #f0f2f7;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <span class="badge ${f.severity==='high'?'badge-fault':f.severity==='medium'?'badge-maintenance':'badge-offline'}">${f.severity==='high'?'긴급':f.severity==='medium'?'보통':'경미'}</span>
+            <strong style="font-size:0.88rem;">${f.stationName}</strong>
+          </div>
+          <div style="font-size:0.82rem;color:#555;">${f.chargerId} · ${f.type}</div>
+          <div style="font-size:0.78rem;color:#bbb;margin-top:2px;">${f.reportedAt}</div>
+        </div>
+      `).join('') + `<div style="text-align:center;padding:12px;"><a href="fault.html" style="font-size:0.82rem;color:#00a87a;">전체 고장 내역 보기 →</a></div>`;
+
+      // 최근 충전 내역
+      const tbody = document.getElementById('recentHistoryBody');
+      tbody.innerHTML = HISTORY.slice(0, 10).map(h => `
+        <tr>
+          <td>${h.stationName}</td>
+          <td style="font-family:monospace;font-size:0.8rem;">${h.chargerId}</td>
+          <td>${h.vehicle}</td>
+          <td>${formatDate(h.startTime)}</td>
+          <td>${h.kwh} kWh</td>
+          <td><strong>${formatKrw(h.amount)}</strong></td>
+          <td>${h.memberType}</td>
+        </tr>
+      `).join('');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KDN Charge 운영시스템 — 충전소 관리</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="admin.css"/>
+</head>
+<body data-page="stations">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">충전소 관리</span>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbarDate"></span>
+        <div class="topbar-user"><div class="user-avatar">관</div><span>관리자</span></div>
+      </div>
+    </div>
+
+    <div class="page-content">
+
+      <!-- 충전소 목록 -->
+      <div class="card" id="stationListCard">
+        <div class="card-header">
+          <span class="card-title">전체 충전소 목록 (<span id="stationCount">0</span>개소)</span>
+          <button class="btn btn-primary btn-sm" onclick="openAddStationModal()">+ 충전소 추가</button>
+        </div>
+        <div class="filter-bar">
+          <input class="form-input" id="searchStation" type="text" placeholder="충전소명 / 주소 검색"/>
+          <select class="form-select" id="filterRegion" onchange="renderStations()">
+            <option value="">전체 지역</option>
+            <option>서울</option><option>경기</option><option>인천</option>
+            <option>강원</option><option>충청</option><option>전라</option>
+            <option>경상</option><option>부산</option><option>대구</option>
+            <option>광주</option><option>대전</option><option>제주</option>
+          </select>
+          <select class="form-select" id="filterStatus" onchange="renderStations()">
+            <option value="">전체 상태</option>
+            <option value="normal">정상</option>
+            <option value="fault">고장</option>
+          </select>
+          <button class="btn btn-secondary" onclick="renderStations()">검색</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>충전소 ID</th>
+                <th>충전소명</th>
+                <th>지역</th>
+                <th>주소</th>
+                <th>충전기 수</th>
+                <th>충전기 현황</th>
+                <th>상태</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="stationTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 충전기 상세 패널 (충전소 클릭 시 표시) -->
+      <div class="card" id="chargerPanel" style="display:none;margin-top:16px;">
+        <div class="card-header">
+          <span class="card-title" id="chargerPanelTitle">충전기 목록</span>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-primary btn-sm" onclick="openAddChargerModal()">+ 충전기 추가</button>
+            <button class="btn btn-secondary btn-sm" onclick="closeChargerPanel()">닫기</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>충전기 ID</th>
+                <th>포트</th>
+                <th>충전 유형</th>
+                <th>현재 상태</th>
+                <th>충전 중 차량</th>
+                <th>최근 업데이트</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="chargerTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 충전소 추가 모달 -->
+  <div class="modal-overlay" id="addStationModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">신규 충전소 추가</span>
+        <button class="modal-close" onclick="closeModal('addStationModal')">✕</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">충전소 ID<span class="required">*</span></label>
+          <input class="form-input" id="newStId" placeholder="예: ST011"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">지역<span class="required">*</span></label>
+          <select class="form-select" id="newStRegion">
+            <option>서울</option><option>경기</option><option>인천</option>
+            <option>강원</option><option>충청</option><option>전라</option>
+            <option>경상</option><option>부산</option><option>대구</option>
+            <option>광주</option><option>대전</option><option>제주</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">충전소명<span class="required">*</span></label>
+        <input class="form-input" id="newStName" placeholder="예: 서울 강남 충전소"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">주소<span class="required">*</span></label>
+        <input class="form-input" id="newStAddr" placeholder="도로명 주소 입력"/>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('addStationModal')">취소</button>
+        <button class="btn btn-primary" onclick="addStation()">추가</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 충전기 추가 모달 -->
+  <div class="modal-overlay" id="addChargerModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">충전기 추가</span>
+        <button class="modal-close" onclick="closeModal('addChargerModal')">✕</button>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">포트명<span class="required">*</span></label>
+          <input class="form-input" id="newChPort" placeholder="예: 7번 포트"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">충전 유형<span class="required">*</span></label>
+          <select class="form-select" id="newChType">
+            <option>초급속 350kW</option>
+            <option>급속 100kW</option>
+            <option>완속 7kW</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('addChargerModal')">취소</button>
+        <button class="btn btn-primary" onclick="addCharger()">추가</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+  <script>
+    let selectedStationId = null;
+
+    function renderStations() {
+      const search = document.getElementById('searchStation').value.toLowerCase();
+      const region = document.getElementById('filterRegion').value;
+      const status = document.getElementById('filterStatus').value;
+
+      const filtered = STATIONS.filter(s =>
+        (!search || s.name.toLowerCase().includes(search) || s.address.toLowerCase().includes(search)) &&
+        (!region || s.region === region) &&
+        (!status || s.status === status)
+      );
+      document.getElementById('stationCount').textContent = filtered.length;
+
+      const tbody = document.getElementById('stationTableBody');
+      tbody.innerHTML = filtered.map(s => {
+        const stChargers = CHARGERS.filter(c => c.stationId === s.id);
+        const avail = stChargers.filter(c => c.status === 'available').length;
+        const charg = stChargers.filter(c => c.status === 'charging').length;
+        const fault = stChargers.filter(c => c.status === 'fault').length;
+        return `<tr style="cursor:pointer;" onclick="showChargers('${s.id}')">
+          <td style="font-family:monospace;font-size:0.8rem;">${s.id}</td>
+          <td><strong>${s.name}</strong></td>
+          <td>${s.region}</td>
+          <td style="font-size:0.82rem;color:#666;">${s.address}</td>
+          <td style="text-align:center;">${stChargers.length}대</td>
+          <td>
+            <span style="font-size:0.78rem;color:#00a87a;">가능 ${avail}</span> /
+            <span style="font-size:0.78rem;color:#2563eb;">충전 ${charg}</span> /
+            <span style="font-size:0.78rem;color:#e74c3c;">고장 ${fault}</span>
+          </td>
+          <td>${s.status === 'normal'
+            ? '<span class="badge badge-available">정상</span>'
+            : '<span class="badge badge-fault">고장</span>'}</td>
+          <td onclick="event.stopPropagation()">
+            <button class="btn btn-sm btn-secondary" onclick="showChargers('${s.id}')">충전기 조회</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function showChargers(stationId) {
+      selectedStationId = stationId;
+      const station = STATIONS.find(s => s.id === stationId);
+      document.getElementById('chargerPanelTitle').textContent = `${station.name} — 충전기 목록`;
+      const panel = document.getElementById('chargerPanel');
+      panel.style.display = '';
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      const stChargers = CHARGERS.filter(c => c.stationId === stationId);
+      document.getElementById('chargerTableBody').innerHTML = stChargers.map(c => `
+        <tr>
+          <td style="font-family:monospace;font-size:0.8rem;">${c.id}</td>
+          <td>${c.port}</td>
+          <td>${c.type}</td>
+          <td>${statusBadge(c.status)}</td>
+          <td>${c.connectedVehicle || '<span style="color:#ccc;">-</span>'}</td>
+          <td style="font-size:0.78rem;color:#888;">${formatDate(c.lastUpdate)}</td>
+          <td>
+            <a href="fault.html?chargerId=${c.id}" class="btn btn-sm btn-danger">고장 등록</a>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function closeChargerPanel() {
+      document.getElementById('chargerPanel').style.display = 'none';
+      selectedStationId = null;
+    }
+
+    function openAddStationModal() {
+      document.getElementById('addStationModal').classList.add('open');
+    }
+    function openAddChargerModal() {
+      document.getElementById('addChargerModal').classList.add('open');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    function addStation() {
+      const id = document.getElementById('newStId').value.trim();
+      const name = document.getElementById('newStName').value.trim();
+      const region = document.getElementById('newStRegion').value;
+      const address = document.getElementById('newStAddr').value.trim();
+      if (!id || !name || !address) { showToast('필수 항목을 모두 입력해주세요.', 'error'); return; }
+      // TODO: Supabase INSERT
+      STATIONS.push({ id, name, region, address, chargerCount: 0, status: 'normal' });
+      closeModal('addStationModal');
+      renderStations();
+      showToast('충전소가 추가되었습니다.');
+    }
+
+    function addCharger() {
+      if (!selectedStationId) return;
+      const port = document.getElementById('newChPort').value.trim();
+      const type = document.getElementById('newChType').value;
+      if (!port) { showToast('포트명을 입력해주세요.', 'error'); return; }
+      const newId = 'CHG' + String(CHARGERS.length + 1).padStart(4, '0');
+      // TODO: Supabase INSERT
+      CHARGERS.push({ id: newId, stationId: selectedStationId, stationName: '', port, type, status: 'offline', lastUpdate: new Date().toISOString() });
+      closeModal('addChargerModal');
+      showChargers(selectedStationId);
+      showToast('충전기가 추가되었습니다.');
+    }
+
+    document.getElementById('searchStation').addEventListener('keydown', e => { if (e.key === 'Enter') renderStations(); });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderStations();
+    });
+  </script>
+</body>
+</html>

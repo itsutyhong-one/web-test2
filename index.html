@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KDN 전기차 충전서비스 | 초급속 충전의 새로운 기준</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- 헤더 -->
+  <header class="header" id="header">
+    <div class="container header-inner">
+      <a href="#" class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">KDN<span class="logo-accent">Charge</span></span>
+      </a>
+      <nav class="nav" id="nav">
+        <a href="#about">서비스 소개</a>
+        <a href="#charger">충전기 안내</a>
+        <a href="#stations">충전소 찾기</a>
+        <a href="#pricing">요금 안내</a>
+        <a href="#notice">공지사항</a>
+        <a href="#contact">고객센터</a>
+      </nav>
+      <a href="admin/index.html" class="btn-admin-link" target="_blank">운영시스템 →</a>
+      <button class="btn-app-download">앱 다운로드</button>
+      <button class="hamburger" id="hamburger" aria-label="메뉴">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 히어로 섹션 -->
+  <section class="hero" id="hero">
+    <div class="hero-bg"></div>
+    <div class="container hero-content">
+      <div class="hero-text">
+        <p class="hero-label">초급속 충전의 새로운 기준</p>
+        <h1 class="hero-title">
+          언제 어디서나<br />
+          <span class="highlight">빠르고 편리한</span><br />
+          전기차 충전
+        </h1>
+        <p class="hero-desc">
+          전국 <strong>200개소</strong>에 구축된 KDN Charge 초급속 충전 네트워크.<br />
+          최대 <strong>350kW</strong> 충전 속도로 단 15분, 완전 충전이 가능합니다.
+        </p>
+        <div class="hero-btns">
+          <a href="#stations" class="btn btn-primary">충전소 찾기</a>
+          <a href="#about" class="btn btn-outline">서비스 알아보기</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat">
+            <span class="stat-num">200<span class="stat-unit">개소</span></span>
+            <span class="stat-label">전국 충전소</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-num">350<span class="stat-unit">kW</span></span>
+            <span class="stat-label">최대 충전 속도</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-num">15<span class="stat-unit">분</span></span>
+            <span class="stat-label">급속 충전 완료</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-map-wrap">
+        <div class="map-label">전국 충전소 현황</div>
+        <div class="map-container">
+          <svg class="korea-map" viewBox="0 0 360 480" xmlns="http://www.w3.org/2000/svg">
+            <!-- 대한민국 지도 테두리 (단순화) -->
+            <path class="korea-outline" d="
+              M 155,30
+              L 170,25 L 190,28 L 210,32 L 225,38 L 235,50
+              L 245,55 L 255,52 L 265,58 L 268,68 L 260,75
+              L 265,85 L 275,90 L 280,100 L 278,112 L 270,118
+              L 275,128 L 280,138 L 278,150 L 270,158 L 268,170
+              L 272,180 L 275,192 L 270,205 L 262,215 L 258,228
+              L 255,242 L 258,255 L 262,265 L 258,278 L 250,288
+              L 242,298 L 238,310 L 232,320 L 225,328 L 215,335
+              L 205,342 L 195,348 L 185,352 L 175,355 L 165,352
+              L 155,348 L 145,342 L 135,335 L 125,325 L 118,312
+              L 112,300 L 108,288 L 110,275 L 115,265 L 112,252
+              L 108,240 L 105,228 L 102,215 L 98,202 L 95,190
+              L 92,178 L 90,165 L 92,152 L 98,140 L 102,128
+              L 98,118 L 90,110 L 88,98 L 92,85 L 100,78
+              L 105,68 L 112,60 L 118,50 L 128,42 L 140,34
+              Z
+            "/>
+            <!-- 서해 연안 약간 들쑥날쑥한 서쪽 해안선 힌트 -->
+            <path class="korea-coast" d="
+              M 92,165 Q 80,170 78,180 Q 76,192 80,200 Q 84,210 82,220
+              Q 80,232 85,240 Q 90,248 88,258
+            " fill="none"/>
+            <!-- 동해 동쪽 해안 -->
+            <path class="korea-coast" d="
+              M 270,118 Q 282,125 280,138 Q 278,150 274,162
+              Q 272,174 275,185
+            " fill="none"/>
+
+            <!-- 충전소 위치 점들 (전국 분포) -->
+            <!-- 서울/경기 권역 -->
+            <circle class="station" cx="175" cy="108" r="5"/>
+            <circle class="station" cx="185" cy="98" r="4"/>
+            <circle class="station" cx="165" cy="100" r="4"/>
+            <circle class="station" cx="195" cy="112" r="5"/>
+            <circle class="station" cx="158" cy="115" r="3.5"/>
+            <circle class="station" cx="200" cy="102" r="3.5"/>
+            <circle class="station" cx="178" cy="120" r="4"/>
+            <circle class="station" cx="168" cy="90" r="3.5"/>
+            <!-- 강원 권역 -->
+            <circle class="station" cx="222" cy="95" r="4.5"/>
+            <circle class="station" cx="238" cy="105" r="4"/>
+            <circle class="station" cx="248" cy="118" r="3.5"/>
+            <circle class="station" cx="230" cy="115" r="3.5"/>
+            <!-- 충청 권역 -->
+            <circle class="station" cx="158" cy="148" r="5"/>
+            <circle class="station" cx="175" cy="155" r="4.5"/>
+            <circle class="station" cx="192" cy="145" r="4"/>
+            <circle class="station" cx="142" cy="158" r="3.5"/>
+            <circle class="station" cx="208" cy="155" r="3.5"/>
+            <circle class="station" cx="168" cy="168" r="4"/>
+            <!-- 전라 권역 -->
+            <circle class="station" cx="128" cy="202" r="5"/>
+            <circle class="station" cx="145" cy="215" r="4.5"/>
+            <circle class="station" cx="118" cy="220" r="4"/>
+            <circle class="station" cx="138" cy="232" r="3.5"/>
+            <circle class="station" cx="155" cy="225" r="4"/>
+            <circle class="station" cx="122" cy="242" r="3.5"/>
+            <circle class="station" cx="148" cy="248" r="3.5"/>
+            <!-- 경상 권역 -->
+            <circle class="station" cx="208" cy="198" r="5"/>
+            <circle class="station" cx="225" cy="205" r="4.5"/>
+            <circle class="station" cx="215" cy="218" r="4"/>
+            <circle class="station" cx="238" cy="215" r="4"/>
+            <circle class="station" cx="225" cy="232" r="4.5"/>
+            <circle class="station" cx="242" cy="228" r="3.5"/>
+            <circle class="station" cx="212" cy="238" r="3.5"/>
+            <circle class="station" cx="235" cy="248" r="4"/>
+            <circle class="station" cx="248" cy="240" r="3.5"/>
+            <!-- 부산/경남 권역 -->
+            <circle class="station" cx="230" cy="268" r="5"/>
+            <circle class="station" cx="218" cy="278" r="4.5"/>
+            <circle class="station" cx="242" cy="272" r="4"/>
+            <circle class="station" cx="208" cy="288" r="3.5"/>
+            <!-- 광주/전남 권역 -->
+            <circle class="station" cx="135" cy="268" r="5"/>
+            <circle class="station" cx="148" cy="278" r="4"/>
+            <circle class="station" cx="125" cy="280" r="3.5"/>
+            <circle class="station" cx="140" cy="292" r="3.5"/>
+            <!-- 제주 -->
+            <circle class="station-jeju" cx="155" cy="370" r="4.5"/>
+            <circle class="station-jeju" cx="172" cy="365" r="4"/>
+            <circle class="station-jeju" cx="140" cy="365" r="3.5"/>
+            <!-- 제주 섬 윤곽 (단순) -->
+            <ellipse class="jeju-outline" cx="158" cy="368" rx="32" ry="18"/>
+
+            <!-- 지역 레이블 -->
+            <text class="map-region-label" x="176" y="108">서울·경기</text>
+            <text class="map-region-label" x="232" y="108">강원</text>
+            <text class="map-region-label" x="172" y="158">충청</text>
+            <text class="map-region-label" x="130" y="232">전라</text>
+            <text class="map-region-label" x="222" y="220">경상</text>
+            <text class="map-region-label" x="148" y="356">제주</text>
+          </svg>
+          <div class="map-legend">
+            <span class="legend-dot"></span>
+            <span class="legend-text">KDN Charge 충전소</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-scroll-hint">
+      <span>스크롤하여 더 알아보기</span>
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+  <!-- 특징 배너 -->
+  <section class="feature-banner">
+    <div class="container feature-banner-inner">
+      <div class="feature-item">
+        <span class="feature-icon">⚡</span>
+        <div>
+          <strong>초급속 350kW</strong>
+          <span>업계 최고 수준</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">📍</span>
+        <div>
+          <strong>전국 200개소</strong>
+          <span>고속도로·도심 거점</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">📱</span>
+        <div>
+          <strong>앱 실시간 조회</strong>
+          <span>빈 충전기 바로 확인</span>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">🔒</span>
+        <div>
+          <strong>24시간 운영</strong>
+          <span>365일 안정적 서비스</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 서비스 소개 -->
+  <section class="about" id="about">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">SERVICE</span>
+        <h2 class="section-title">KDN Charge가 <span class="highlight">다른 이유</span></h2>
+        <p class="section-desc">초급속 충전 인프라와 스마트한 서비스로 전기차 라이프스타일을 혁신합니다.</p>
+      </div>
+      <div class="about-grid">
+        <div class="about-card">
+          <div class="about-card-icon">⚡</div>
+          <h3>초급속 350kW 충전</h3>
+          <p>국내 최고 수준의 350kW 초급속 충전기로 단 15분 만에 80% 이상 충전이 가능합니다. CCS1·CCS2·CHAdeMO 모든 규격을 지원합니다.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon">🗺️</div>
+          <h3>전국 거점 네트워크</h3>
+          <p>고속도로 휴게소, 도심 상업 지구, 주거 밀집 지역 등 전국 200개소에 전략적으로 배치되어 어디서나 편리하게 이용할 수 있습니다.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon">📱</div>
+          <h3>스마트 앱 서비스</h3>
+          <p>실시간 충전소 현황 조회, 충전 예약, 결제 이력 관리까지 KDN Charge 앱 하나로 모든 것을 해결하세요.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon">💳</div>
+          <h3>회원 혜택 & 멤버십</h3>
+          <p>회원 가입 시 비회원 대비 최대 30% 할인 혜택을 제공합니다. 충전 포인트를 적립하여 다음 충전에 사용하세요.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon">🛡️</div>
+          <h3>안전한 충전 환경</h3>
+          <p>CCTV 24시간 모니터링, 화재감지 시스템, 안전 차단 장치를 갖춘 안심 충전 환경을 제공합니다.</p>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon">🌿</div>
+          <h3>친환경 그린 에너지</h3>
+          <p>재생에너지 공급 인증을 받은 친환경 전력을 사용합니다. 탄소중립 목표에 함께 기여하는 충전 서비스입니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 충전기 스펙 섹션 -->
+  <section class="charger" id="charger">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">CHARGER</span>
+        <h2 class="section-title">초급속 충전기 <span class="highlight">라인업</span></h2>
+        <p class="section-desc">KDN Charge만의 고성능 충전 인프라를 소개합니다.</p>
+      </div>
+      <div class="charger-cards">
+        <div class="charger-card charger-main">
+          <div class="charger-badge">대표 모델</div>
+          <div class="charger-img-area">
+            <div class="charger-illustration ultra">
+              <div class="charger-body">
+                <div class="charger-screen"></div>
+                <div class="charger-port"></div>
+                <div class="charger-bolt">⚡</div>
+              </div>
+            </div>
+          </div>
+          <h3>초급속 충전기</h3>
+          <p class="charger-power">350kW</p>
+          <ul class="charger-spec">
+            <li><span>충전 규격</span><span>CCS1 / CCS2</span></li>
+            <li><span>충전 시간</span><span>약 15분 (80%)</span></li>
+            <li><span>동시 충전</span><span>2대 동시 가능</span></li>
+            <li><span>결제 방식</span><span>카드 / 앱 / RFID</span></li>
+          </ul>
+        </div>
+        <div class="charger-card">
+          <div class="charger-img-area">
+            <div class="charger-illustration fast">
+              <div class="charger-body">
+                <div class="charger-screen"></div>
+                <div class="charger-port"></div>
+                <div class="charger-bolt">⚡</div>
+              </div>
+            </div>
+          </div>
+          <h3>급속 충전기</h3>
+          <p class="charger-power">100kW</p>
+          <ul class="charger-spec">
+            <li><span>충전 규격</span><span>CCS1 / CHAdeMO</span></li>
+            <li><span>충전 시간</span><span>약 40분 (80%)</span></li>
+            <li><span>동시 충전</span><span>1대</span></li>
+            <li><span>결제 방식</span><span>카드 / 앱 / RFID</span></li>
+          </ul>
+        </div>
+        <div class="charger-card">
+          <div class="charger-img-area">
+            <div class="charger-illustration standard">
+              <div class="charger-body">
+                <div class="charger-screen"></div>
+                <div class="charger-port"></div>
+                <div class="charger-bolt">⚡</div>
+              </div>
+            </div>
+          </div>
+          <h3>완속 충전기</h3>
+          <p class="charger-power">7kW</p>
+          <ul class="charger-spec">
+            <li><span>충전 규격</span><span>AC 5핀 / AC 3핀</span></li>
+            <li><span>충전 시간</span><span>약 6~8시간</span></li>
+            <li><span>동시 충전</span><span>1대</span></li>
+            <li><span>결제 방식</span><span>카드 / 앱 / RFID</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 요금 안내 -->
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">PRICING</span>
+        <h2 class="section-title">합리적인 <span class="highlight">충전 요금</span></h2>
+        <p class="section-desc">회원 가입만으로 더 저렴하게 충전하세요.</p>
+      </div>
+      <div class="pricing-cards">
+        <div class="pricing-card">
+          <div class="pricing-type">비회원</div>
+          <div class="pricing-price">
+            <span class="price-num">400</span>
+            <span class="price-unit">원/kWh</span>
+          </div>
+          <p class="pricing-desc">별도 가입 없이 신용카드 즉시 결제</p>
+          <ul class="pricing-features">
+            <li>✓ 신용/체크카드 결제</li>
+            <li>✓ 로밍 카드 사용 가능</li>
+            <li class="disabled">✗ 포인트 적립</li>
+            <li class="disabled">✗ 할인 혜택</li>
+          </ul>
+          <a href="#" class="btn btn-outline-dark">바로 이용하기</a>
+        </div>
+        <div class="pricing-card featured">
+          <div class="pricing-badge">추천</div>
+          <div class="pricing-type">일반 회원</div>
+          <div class="pricing-price">
+            <span class="price-num">310</span>
+            <span class="price-unit">원/kWh</span>
+          </div>
+          <p class="pricing-desc">앱 회원 가입 후 즉시 적용</p>
+          <ul class="pricing-features">
+            <li>✓ 신용/체크카드 결제</li>
+            <li>✓ 앱 간편 결제</li>
+            <li>✓ 충전 포인트 1% 적립</li>
+            <li>✓ 이용 내역 관리</li>
+          </ul>
+          <a href="#" class="btn btn-primary">무료 회원가입</a>
+        </div>
+        <div class="pricing-card">
+          <div class="pricing-type">프리미엄 회원</div>
+          <div class="pricing-price">
+            <span class="price-num">275</span>
+            <span class="price-unit">원/kWh</span>
+          </div>
+          <p class="pricing-desc">월 9,900원 구독 | 연간 결제 시 추가 할인</p>
+          <ul class="pricing-features">
+            <li>✓ 최저가 충전 단가</li>
+            <li>✓ 앱 간편 결제</li>
+            <li>✓ 충전 포인트 3% 적립</li>
+            <li>✓ 우선 예약 서비스</li>
+          </ul>
+          <a href="#" class="btn btn-outline-dark">구독 시작하기</a>
+        </div>
+      </div>
+      <p class="pricing-note">※ 요금은 부가세 포함 기준이며, 전력 비용 변동에 따라 변경될 수 있습니다.</p>
+    </div>
+  </section>
+
+  <!-- 이용 방법 -->
+  <section class="howto">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">HOW TO USE</span>
+        <h2 class="section-title">이용 방법은 <span class="highlight">간단합니다</span></h2>
+      </div>
+      <div class="howto-steps">
+        <div class="howto-step">
+          <div class="step-num">01</div>
+          <div class="step-icon">📱</div>
+          <h3>앱 설치 & 회원가입</h3>
+          <p>KDN Charge 앱을 설치하고 간단한 정보 입력으로 무료 회원가입 하세요.</p>
+        </div>
+        <div class="howto-arrow">→</div>
+        <div class="howto-step">
+          <div class="step-num">02</div>
+          <div class="step-icon">📍</div>
+          <h3>충전소 검색</h3>
+          <p>내 위치 주변의 충전소를 실시간으로 확인하고 빈 충전기를 찾아보세요.</p>
+        </div>
+        <div class="howto-arrow">→</div>
+        <div class="howto-step">
+          <div class="step-num">03</div>
+          <div class="step-icon">🔌</div>
+          <h3>커넥터 연결</h3>
+          <p>차량에 맞는 커넥터를 선택하여 연결하고 앱 또는 카드로 충전을 시작하세요.</p>
+        </div>
+        <div class="howto-arrow">→</div>
+        <div class="howto-step">
+          <div class="step-num">04</div>
+          <div class="step-icon">✅</div>
+          <h3>충전 완료 & 결제</h3>
+          <p>충전이 완료되면 알림을 받고 자동 결제됩니다. 포인트도 바로 적립됩니다.</p>
+        </div>
+      </div>
+      <div class="app-download-area">
+        <p class="app-download-text">지금 앱을 다운로드하고 첫 충전 <strong>3,000포인트</strong>를 받아보세요!</p>
+        <div class="app-btns">
+          <a href="#" class="app-btn">
+            <span class="app-store-icon">🍎</span>
+            <div>
+              <small>Download on the</small>
+              <strong>App Store</strong>
+            </div>
+          </a>
+          <a href="#" class="app-btn">
+            <span class="app-store-icon">▶</span>
+            <div>
+              <small>Get it on</small>
+              <strong>Google Play</strong>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 공지사항 -->
+  <section class="notice" id="notice">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">NOTICE</span>
+        <h2 class="section-title">공지사항 <span class="highlight">& 소식</span></h2>
+      </div>
+      <div class="notice-grid">
+        <div class="notice-list">
+          <div class="notice-item">
+            <span class="notice-badge new">NEW</span>
+            <a href="#" class="notice-title">2026년 상반기 신규 충전소 20개소 추가 오픈 안내</a>
+            <span class="notice-date">2026.05.20</span>
+          </div>
+          <div class="notice-item">
+            <span class="notice-badge">공지</span>
+            <a href="#" class="notice-title">KDN Charge 앱 v3.2 업데이트 안내 (충전 예약 기능 추가)</a>
+            <span class="notice-date">2026.05.10</span>
+          </div>
+          <div class="notice-item">
+            <span class="notice-badge">점검</span>
+            <a href="#" class="notice-title">고속도로 휴게소 충전소 정기 점검 일정 안내 (5월)</a>
+            <span class="notice-date">2026.04.30</span>
+          </div>
+          <div class="notice-item">
+            <span class="notice-badge new">이벤트</span>
+            <a href="#" class="notice-title">신규 회원 가입 이벤트 — 첫 충전 50% 할인 쿠폰 증정</a>
+            <span class="notice-date">2026.04.15</span>
+          </div>
+          <div class="notice-item">
+            <span class="notice-badge">공지</span>
+            <a href="#" class="notice-title">프리미엄 회원 요금 개편 안내 (2026.05.01 적용)</a>
+            <span class="notice-date">2026.04.01</span>
+          </div>
+        </div>
+        <div class="news-highlight">
+          <div class="news-tag">📰 KDN Charge 소식</div>
+          <h3>"초급속 충전 네트워크 200개소 돌파"</h3>
+          <p>KDN Charge는 2026년 5월 기준, 전국 200개소 초급속 충전 네트워크를 완성했습니다. 고속도로 거점 충전소를 중심으로 도심과 외곽을 잇는 촘촘한 충전 네트워크를 구축하여 전기차 이용자들의 충전 불안(Range Anxiety)을 해소하고 있습니다.</p>
+          <a href="#" class="btn btn-primary" style="margin-top:1rem">자세히 보기</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 고객센터 -->
+  <section class="contact" id="contact">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">CONTACT</span>
+        <h2 class="section-title">고객센터 <span class="highlight">안내</span></h2>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-card">
+          <div class="contact-icon">📞</div>
+          <h3>전화 상담</h3>
+          <p class="contact-main">1588-0000</p>
+          <p class="contact-sub">평일 09:00 ~ 18:00<br/>(점심 12:00~13:00 제외)</p>
+        </div>
+        <div class="contact-card">
+          <div class="contact-icon">💬</div>
+          <h3>채팅 상담</h3>
+          <p class="contact-main">앱 내 채팅</p>
+          <p class="contact-sub">평일 09:00 ~ 21:00<br/>주말 10:00 ~ 18:00</p>
+        </div>
+        <div class="contact-card">
+          <div class="contact-icon">🚨</div>
+          <h3>긴급 출동 서비스</h3>
+          <p class="contact-main">24시간 365일</p>
+          <p class="contact-sub">충전 오류 및 긴급 상황 시<br/>즉시 출동 서비스 제공</p>
+        </div>
+        <div class="contact-card">
+          <div class="contact-icon">✉️</div>
+          <h3>이메일 문의</h3>
+          <p class="contact-main">cs@kdncharge.co.kr</p>
+          <p class="contact-sub">영업일 기준<br/>24시간 내 답변</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 푸터 -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">KDN<span class="logo-accent">Charge</span></span>
+        <p class="footer-slogan">초급속 충전의 새로운 기준</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <strong>서비스</strong>
+          <a href="#">충전소 찾기</a>
+          <a href="#">충전기 안내</a>
+          <a href="#">요금 안내</a>
+          <a href="#">앱 다운로드</a>
+        </div>
+        <div class="footer-col">
+          <strong>회사</strong>
+          <a href="#">회사 소개</a>
+          <a href="#">사업 제휴</a>
+          <a href="#">채용 안내</a>
+          <a href="#">뉴스룸</a>
+        </div>
+        <div class="footer-col">
+          <strong>고객 지원</strong>
+          <a href="#">공지사항</a>
+          <a href="#">자주 묻는 질문</a>
+          <a href="#">이용약관</a>
+          <a href="#">개인정보처리방침</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <p>© 2026 KDN Charge. All rights reserved. | 사업자등록번호 000-00-00000 | 서울특별시 강남구 테헤란로 123</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
