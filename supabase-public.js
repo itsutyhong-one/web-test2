@@ -33,4 +33,23 @@
     if (error) { console.error('stations:', error); return null; }
     return data;
   };
+
+  window.getPublicChargers = async function() {
+    if (!db) return null;
+    const { data, error } = await db.from('chargers')
+      .select('id,status,charge_percent,station_id,stations(name)')
+      .order('id');
+    if (error) { console.error('chargers:', error); return null; }
+    return data.map(c => ({ ...c, stationName: c.stations?.name || '' }));
+  };
+
+  window.getPublicTodayHistoryCount = async function() {
+    if (!db) return null;
+    const today = new Date().toISOString().slice(0, 10);
+    const { count, error } = await db.from('charging_history')
+      .select('*', { count: 'exact', head: true })
+      .gte('start_time', today + 'T00:00:00');
+    if (error) { console.error('history count:', error); return null; }
+    return count;
+  };
 })();

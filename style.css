@@ -949,7 +949,7 @@ section { padding: 100px 0; }
 =========================== */
 @media (max-width: 1024px) {
   .hero-content { grid-template-columns: 1fr; gap: 2rem; }
-  .hero-visual { order: -1; }
+  .hero-visual { order: 1; }
   .about-grid { grid-template-columns: repeat(2, 1fr); }
   .charger-cards { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
   .contact-grid { grid-template-columns: repeat(2, 1fr); }
