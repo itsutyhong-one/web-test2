@@ -156,6 +156,8 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-client.js"></script>
   <script src="admin.js"></script>
   <script>
     const localNotices = [...NOTICES];
@@ -174,13 +176,10 @@
       renderNotices();
     });
 
-    function renderNotices() {
-      const statusF = document.getElementById('filterNoticeStatus').value;
-      const catF = document.getElementById('filterNoticeCategory').value;
-      const items = localNotices.filter(n =>
-        (!statusF || n.status === statusF) &&
-        (!catF || n.category === catF)
-      );
+    async function renderNotices() {
+      const statusF = document.getElementById('filterNoticeCategory') ? document.getElementById('filterNoticeStatus').value : '';
+      const catF = document.getElementById('filterNoticeCategory') ? document.getElementById('filterNoticeCategory').value : '';
+      const items = await getNotices({ status: statusF || undefined, category: catF || undefined });
       document.getElementById('noticeCount').textContent = items.length;
 
       document.getElementById('noticeListContent').innerHTML = items.length === 0
@@ -199,7 +198,7 @@
               <div style="margin-left:auto;display:flex;gap:6px;">
                 <button class="btn btn-sm btn-secondary" onclick="previewNotice('${n.id}')">미리보기</button>
                 <button class="btn btn-sm btn-outline" onclick="editNotice('${n.id}')">수정</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteNotice('${n.id}')">삭제</button>
+                <button class="btn btn-sm btn-danger" onclick="handleDeleteNotice('${n.id}')">삭제</button>
               </div>
             </div>
           </div>
@@ -218,8 +217,9 @@
       document.getElementById('scheduleGroup').style.display = 'none';
     }
 
-    function editNotice(id) {
-      const n = localNotices.find(x => x.id === id);
+    async function editNotice(id) {
+      const items = await getNotices();
+      const n = items.find(x => x.id === id);
       if (!n) return;
       editingId = id;
       document.getElementById('formTitle').textContent = '✏️ 공지사항 수정';
@@ -231,17 +231,16 @@
       document.getElementById('noticeFormCard').scrollIntoView({ behavior: 'smooth' });
     }
 
-    function deleteNotice(id) {
+    async function handleDeleteNotice(id) {
       if (!confirm('이 공지사항을 삭제하시겠습니까?')) return;
-      const idx = localNotices.findIndex(x => x.id === id);
-      if (idx !== -1) localNotices.splice(idx, 1);
-      // TODO: Supabase DELETE
+      await deleteNotice(id);
       renderNotices();
       showToast('공지사항이 삭제되었습니다.');
     }
 
-    function previewNotice(id) {
-      const n = localNotices.find(x => x.id === id);
+    async function previewNotice(id) {
+      const items = await getNotices();
+      const n = items.find(x => x.id === id);
       if (!n) return;
       document.getElementById('noticePreviewContent').innerHTML = `
         <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;">
@@ -255,38 +254,35 @@
       document.getElementById('noticePreviewModal').classList.add('open');
     }
 
-    function saveDraft() {
+    async function saveDraft() {
       const title = document.getElementById('noticeTitle').value.trim();
       const content = document.getElementById('noticeContent').innerHTML.trim();
       if (!title) { showToast('제목을 입력해주세요.', 'error'); return; }
-      saveNoticeData('미게시');
+      await saveNoticeData('미게시');
       showToast('임시저장 되었습니다.');
     }
 
-    function submitNotice() {
+    async function submitNotice() {
       const title = document.getElementById('noticeTitle').value.trim();
       const content = document.getElementById('noticeContent').innerHTML.trim();
       if (!title || !content) { showToast('제목과 내용을 모두 입력해주세요.', 'error'); return; }
       const status = document.getElementById('noticeStatus').value;
-      saveNoticeData(status);
+      await saveNoticeData(status);
       showToast(editingId ? '공지사항이 수정되었습니다.' : '공지사항이 게시되었습니다.');
       resetNoticeForm();
     }
 
-    function saveNoticeData(status) {
+    async function saveNoticeData(status) {
       const title = document.getElementById('noticeTitle').value.trim();
       const content = document.getElementById('noticeContent').innerHTML.trim();
       const category = document.getElementById('noticeCategory').value;
       const today = new Date().toISOString().slice(0, 10);
 
       if (editingId) {
-        // TODO: Supabase UPDATE
-        const n = localNotices.find(x => x.id === editingId);
-        if (n) { n.title = title; n.content = content; n.category = category; n.status = status; }
+        await updateNotice(editingId, { title, content, category, status });
       } else {
-        // TODO: Supabase INSERT
-        localNotices.unshift({
-          id: 'NTC' + String(localNotices.length + 1).padStart(3, '0'),
+        await insertNotice({
+          id: 'NTC' + String(NOTICES.length + 1).padStart(3, '0'),
           title, category, status,
           author: '관리자',
           createdAt: today,

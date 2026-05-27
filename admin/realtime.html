@@ -101,6 +101,8 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="supabase-client.js"></script>
   <script src="admin.js"></script>
   <script>
     function renderStat() {
@@ -210,11 +212,19 @@
       renderStat();
       renderRealtime();
 
-      // 30초마다 자동 갱신 (실제 운영 시 Supabase realtime subscription으로 대체)
-      setInterval(() => {
+      // Supabase Realtime 구독 (설정 시 자동 갱신, 미설정 시 30초 폴링)
+      const sub = subscribeToChargers(() => {
         renderStat();
         renderRealtime();
-      }, 30000);
+        document.getElementById('lastRefresh').textContent = new Date().toLocaleTimeString('ko-KR');
+      });
+      if (!sub) {
+        setInterval(() => {
+          renderStat();
+          renderRealtime();
+          document.getElementById('lastRefresh').textContent = new Date().toLocaleTimeString('ko-KR');
+        }, 30000);
+      }
     });
   </script>
 </body>

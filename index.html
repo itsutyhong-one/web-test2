@@ -8,7 +8,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 </head>
 <body>
 
@@ -71,13 +70,99 @@
           </div>
         </div>
       </div>
-      <div class="hero-map-wrap">
-        <div class="map-label">전국 충전소 현황</div>
-        <div class="map-container">
-          <svg class="korea-map" id="koreaMapSvg" xmlns="http://www.w3.org/2000/svg"></svg>
-          <div class="map-legend">
-            <span class="legend-dot"></span>
-            <span class="legend-text">KDN Charge 충전소</span>
+      <div class="hero-visual">
+        <div class="hv-card">
+          <div class="hv-header">
+            <div class="hv-live-badge"><span class="hv-live-dot"></span>LIVE</div>
+            <span class="hv-time" id="heroTime"></span>
+          </div>
+
+          <div class="hv-stats-row">
+            <div class="hv-stat">
+              <span class="hv-stat-num" id="hvCharging">0</span>
+              <span class="hv-stat-label">현재 충전 중</span>
+            </div>
+            <div class="hv-stat-sep"></div>
+            <div class="hv-stat">
+              <span class="hv-stat-num" id="hvDone">0</span>
+              <span class="hv-stat-label">오늘 완료</span>
+            </div>
+            <div class="hv-stat-sep"></div>
+            <div class="hv-stat">
+              <span class="hv-stat-num" id="hvRate">0<span style="font-size:1.1rem">%</span></span>
+              <span class="hv-stat-label">충전기 가동률</span>
+            </div>
+          </div>
+
+          <div class="hv-tiles">
+            <div class="hv-tile charging">
+              <div class="hv-tile-icon">🔌</div>
+              <div class="hv-tile-id">CHG0001</div>
+              <div class="hv-tile-station">강남 충전소</div>
+              <div class="hv-tile-progress"><div class="hv-tile-bar" style="width:72%"></div></div>
+              <div class="hv-tile-pct">72%</div>
+            </div>
+            <div class="hv-tile charging">
+              <div class="hv-tile-icon">🔌</div>
+              <div class="hv-tile-id">CHG0015</div>
+              <div class="hv-tile-station">분당 충전소</div>
+              <div class="hv-tile-progress"><div class="hv-tile-bar" style="width:45%"></div></div>
+              <div class="hv-tile-pct">45%</div>
+            </div>
+            <div class="hv-tile available">
+              <div class="hv-tile-icon">✅</div>
+              <div class="hv-tile-id">CHG0008</div>
+              <div class="hv-tile-station">송도 충전소</div>
+              <div class="hv-tile-status-text">충전 가능</div>
+            </div>
+            <div class="hv-tile charging">
+              <div class="hv-tile-icon">🔌</div>
+              <div class="hv-tile-id">CHG0032</div>
+              <div class="hv-tile-station">해운대 충전소</div>
+              <div class="hv-tile-progress"><div class="hv-tile-bar" style="width:88%"></div></div>
+              <div class="hv-tile-pct">88%</div>
+            </div>
+            <div class="hv-tile available">
+              <div class="hv-tile-icon">✅</div>
+              <div class="hv-tile-id">CHG0041</div>
+              <div class="hv-tile-station">수성 충전소</div>
+              <div class="hv-tile-status-text">충전 가능</div>
+            </div>
+            <div class="hv-tile fault">
+              <div class="hv-tile-icon">⚠️</div>
+              <div class="hv-tile-id">CHG0013</div>
+              <div class="hv-tile-station">제주 충전소</div>
+              <div class="hv-tile-status-text">점검 중</div>
+            </div>
+          </div>
+
+          <div class="hv-power-row">
+            <div class="hv-power-label">
+              <span>오늘 총 전력 공급</span>
+              <span class="hv-power-num">18,450 kWh</span>
+            </div>
+            <div class="hv-power-track">
+              <div class="hv-power-bar" id="hvPowerBar"></div>
+            </div>
+            <div class="hv-power-sub">목표 25,000 kWh 대비 73.8%</div>
+          </div>
+
+          <div class="hv-activity">
+            <div class="hv-activity-item">
+              <span class="hv-act-dot charging"></span>
+              <span class="hv-act-text">강남 CHG0002 — 350kW 충전 시작</span>
+              <span class="hv-act-time">방금 전</span>
+            </div>
+            <div class="hv-activity-item">
+              <span class="hv-act-dot done"></span>
+              <span class="hv-act-text">분당 CHG0017 — 충전 완료 (42.3 kWh)</span>
+              <span class="hv-act-time">2분 전</span>
+            </div>
+            <div class="hv-activity-item">
+              <span class="hv-act-dot fault"></span>
+              <span class="hv-act-text">제주 CHG0013 — 고장 접수</span>
+              <span class="hv-act-time">5분 전</span>
+            </div>
           </div>
         </div>
       </div>
