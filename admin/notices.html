@@ -257,10 +257,14 @@
 
     async function saveDraft() {
       const title = document.getElementById('noticeTitle').value.trim();
-      const content = document.getElementById('noticeContent').innerHTML.trim();
       if (!title) { showToast('제목을 입력해주세요.', 'error'); return; }
-      await saveNoticeData('미게시');
-      showToast('임시저장 되었습니다.');
+      try {
+        await saveNoticeData('미게시');
+        showToast('임시저장 되었습니다.');
+      } catch(e) {
+        console.error('임시저장 오류:', e);
+        showToast('저장 중 오류가 발생했습니다: ' + (e.message || e), 'error');
+      }
     }
 
     async function submitNotice() {
@@ -268,9 +272,14 @@
       const content = document.getElementById('noticeContent').innerHTML.trim();
       if (!title || !content) { showToast('제목과 내용을 모두 입력해주세요.', 'error'); return; }
       const status = document.getElementById('noticeStatus').value;
-      await saveNoticeData(status);
-      showToast(editingId ? '공지사항이 수정되었습니다.' : '공지사항이 게시되었습니다.');
-      resetNoticeForm();
+      try {
+        await saveNoticeData(status);
+        showToast(editingId ? '공지사항이 수정되었습니다.' : '공지사항이 게시되었습니다.');
+        resetNoticeForm();
+      } catch(e) {
+        console.error('공지 저장 오류:', e);
+        showToast('저장 중 오류가 발생했습니다: ' + (e.message || e), 'error');
+      }
     }
 
     async function saveNoticeData(status) {
@@ -282,8 +291,9 @@
       if (editingId) {
         await updateNotice(editingId, { title, content, category, status });
       } else {
+        const uid = crypto.randomUUID().replace(/-/g, '').substring(0, 8).toUpperCase();
         await insertNotice({
-          id: 'NTC' + String(NOTICES.length + 1).padStart(3, '0'),
+          id: 'NTC' + uid,
           title, category, status,
           author: '관리자',
           createdAt: today,
