@@ -121,35 +121,9 @@
     <div class="container">
       <div class="notices-header">
         <h2>전체 공지사항</h2>
-        <span class="notices-total">총 <strong>5</strong>건</span>
+        <span class="notices-total">총 <strong>-</strong>건</span>
       </div>
-      <div class="notices-full-list">
-        <div class="notices-full-item">
-          <span class="notice-badge new">NEW</span>
-          <a href="#" class="notices-full-title">2026년 상반기 신규 충전소 20개소 추가 오픈 안내</a>
-          <span class="notices-full-date">2026.05.20</span>
-        </div>
-        <div class="notices-full-item">
-          <span class="notice-badge">공지</span>
-          <a href="#" class="notices-full-title">KDN Charge 앱 v3.2 업데이트 안내 (충전 예약 기능 추가)</a>
-          <span class="notices-full-date">2026.05.10</span>
-        </div>
-        <div class="notices-full-item">
-          <span class="notice-badge check">점검</span>
-          <a href="#" class="notices-full-title">고속도로 휴게소 충전소 정기 점검 일정 안내 (5월)</a>
-          <span class="notices-full-date">2026.04.30</span>
-        </div>
-        <div class="notices-full-item">
-          <span class="notice-badge event">이벤트</span>
-          <a href="#" class="notices-full-title">신규 회원 가입 이벤트 — 첫 충전 50% 할인 쿠폰 증정</a>
-          <span class="notices-full-date">2026.04.15</span>
-        </div>
-        <div class="notices-full-item">
-          <span class="notice-badge">공지</span>
-          <a href="#" class="notices-full-title">프리미엄 회원 요금 개편 안내 (2026.05.01 적용)</a>
-          <span class="notices-full-date">2026.04.01</span>
-        </div>
-      </div>
+      <div class="notices-full-list"></div>
     </div>
   </div>
 
@@ -191,11 +165,44 @@
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="admin/env.js"></script>
+  <script src="supabase-public.js"></script>
   <script src="script.js"></script>
   <script>
+  // Hardcoded fallback data
+  const FALLBACK_NOTICES = [
+    { id:'NTC001', title:'2026년 상반기 신규 충전소 20개소 추가 오픈 안내', category:'공지', createdAt:'2026-05-20' },
+    { id:'NTC002', title:'KDN Charge 앱 v3.2 업데이트 안내 (충전 예약 기능 추가)', category:'공지', createdAt:'2026-05-10' },
+    { id:'NTC003', title:'고속도로 휴게소 충전소 정기 점검 일정 안내 (5월)', category:'점검', createdAt:'2026-04-30' },
+    { id:'NTC004', title:'신규 회원 가입 이벤트 — 첫 충전 50% 할인 쿠폰 증정', category:'이벤트', createdAt:'2026-04-15' },
+    { id:'NTC005', title:'프리미엄 회원 요금 개편 안내 (2026.05.01 적용)', category:'공지', createdAt:'2026-04-01' },
+  ];
+
+  function categoryBadgeClass(cat) {
+    if (cat === '이벤트') return 'event';
+    if (cat === '점검')  return 'check';
+    return '';
+  }
+
+  function renderNoticeList(items) {
+    document.querySelector('.notices-total strong').textContent = items.length;
+    document.querySelector('.notices-full-list').innerHTML = items.map((n, i) => `
+      <div class="notices-full-item">
+        <span class="notice-badge ${i === 0 ? 'new' : categoryBadgeClass(n.category)}">${i === 0 ? 'NEW' : n.category}</span>
+        <a href="#" class="notices-full-title">${n.title}</a>
+        <span class="notices-full-date">${n.createdAt?.replace(/-/g,'.')}</span>
+      </div>
+    `).join('');
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const items = await getPublicNotices();
+    renderNoticeList(items || FALLBACK_NOTICES);
     document.querySelectorAll('.nav a').forEach(a => {
       if (a.href === location.href) a.style.color = '#00c896';
     });
+  });
   </script>
 </body>
 </html>

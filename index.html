@@ -554,33 +554,7 @@
         <h2 class="section-title">공지사항 <span class="highlight">& 소식</span></h2>
       </div>
       <div class="notice-grid">
-        <div class="notice-list">
-          <div class="notice-item">
-            <span class="notice-badge new">NEW</span>
-            <a href="#" class="notice-title">2026년 상반기 신규 충전소 20개소 추가 오픈 안내</a>
-            <span class="notice-date">2026.05.20</span>
-          </div>
-          <div class="notice-item">
-            <span class="notice-badge">공지</span>
-            <a href="#" class="notice-title">KDN Charge 앱 v3.2 업데이트 안내 (충전 예약 기능 추가)</a>
-            <span class="notice-date">2026.05.10</span>
-          </div>
-          <div class="notice-item">
-            <span class="notice-badge">점검</span>
-            <a href="#" class="notice-title">고속도로 휴게소 충전소 정기 점검 일정 안내 (5월)</a>
-            <span class="notice-date">2026.04.30</span>
-          </div>
-          <div class="notice-item">
-            <span class="notice-badge new">이벤트</span>
-            <a href="#" class="notice-title">신규 회원 가입 이벤트 — 첫 충전 50% 할인 쿠폰 증정</a>
-            <span class="notice-date">2026.04.15</span>
-          </div>
-          <div class="notice-item">
-            <span class="notice-badge">공지</span>
-            <a href="#" class="notice-title">프리미엄 회원 요금 개편 안내 (2026.05.01 적용)</a>
-            <span class="notice-date">2026.04.01</span>
-          </div>
-        </div>
+        <div class="notice-list" id="mainNoticeList"></div>
         <div class="news-highlight">
           <div class="news-tag">📰 KDN Charge 소식</div>
           <h3>"초급속 충전 네트워크 200개소 돌파"</h3>
@@ -666,6 +640,35 @@
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="admin/env.js"></script>
+  <script src="supabase-public.js"></script>
   <script src="script.js"></script>
+  <script>
+  const FALLBACK_MAIN_NOTICES = [
+    { title:'2026년 상반기 신규 충전소 20개소 추가 오픈 안내', category:'공지', createdAt:'2026-05-20', isNew: true },
+    { title:'KDN Charge 앱 v3.2 업데이트 안내 (충전 예약 기능 추가)', category:'공지', createdAt:'2026-05-10' },
+    { title:'고속도로 휴게소 충전소 정기 점검 일정 안내 (5월)', category:'점검', createdAt:'2026-04-30' },
+    { title:'신규 회원 가입 이벤트 — 첫 충전 50% 할인 쿠폰 증정', category:'이벤트', createdAt:'2026-04-15' },
+    { title:'프리미엄 회원 요금 개편 안내 (2026.05.01 적용)', category:'공지', createdAt:'2026-04-01' },
+  ];
+
+  function renderMainNotices(items) {
+    const list = document.getElementById('mainNoticeList');
+    if (!list) return;
+    list.innerHTML = items.slice(0, 5).map((n, i) => `
+      <div class="notice-item">
+        <span class="notice-badge${i === 0 ? ' new' : ''}">${i === 0 ? 'NEW' : n.category}</span>
+        <a href="notices-public.html" class="notice-title">${n.title}</a>
+        <span class="notice-date">${n.createdAt?.replace(/-/g,'.')}</span>
+      </div>
+    `).join('');
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const items = await getPublicNotices();
+    renderMainNotices(items || FALLBACK_MAIN_NOTICES);
+  });
+  </script>
 </body>
 </html>

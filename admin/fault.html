@@ -140,7 +140,7 @@
   <script src="supabase-client.js"></script>
   <script src="admin.js"></script>
   <script>
-    const localFaults = [...FAULTS];
+    let localFaults = [];
 
     function renderFaultList() {
       const statusFilter = document.getElementById('filterFaultStatus').value;
@@ -221,7 +221,7 @@
       document.getElementById('faultAction').value = '';
     }
 
-    function submitFault() {
+    async function submitFault() {
       const stId = document.getElementById('faultStation').value;
       const chId = document.getElementById('faultCharger').value;
       const type = document.getElementById('faultType').value;
@@ -237,7 +237,17 @@
       const newId = 'FLT' + String(localFaults.length + 1).padStart(3, '0');
       const now = new Date().toLocaleString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }).replace(/\. /g, '-').replace('.', '');
 
-      // TODO: Supabase INSERT into faults table
+      await insertFault({
+        id: newId,
+        chargerId: chId,
+        stationId: stId,
+        stationName: st.name,
+        type,
+        severity,
+        status: '접수',
+        reportedAt: now,
+        desc,
+      });
       localFaults.unshift({
         id: newId,
         chargerId: chId,
@@ -272,7 +282,9 @@
       }, 50);
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      await initData();
+      localFaults = [...FAULTS];
       const sel = document.getElementById('faultStation');
       STATIONS.forEach(s => {
         const opt = document.createElement('option');

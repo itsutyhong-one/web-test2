@@ -200,7 +200,8 @@
     }
 
     // 충전소 드롭다운 초기화
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      await initData();
       const sel = document.getElementById('filterStation');
       STATIONS.forEach(s => {
         const opt = document.createElement('option');

@@ -42,7 +42,7 @@ async function getChargers({ stationId, status } = {}) {
   if (status)    q = q.eq('status', status);
   const { data, error } = await q;
   if (error) { console.error('chargers:', error); return CHARGERS; }
-  return data.map(c => ({ ...c, stationId: c.station_id, stationName: c.stations?.name || '' }));
+  return data.map(c => ({ ...c, stationId: c.station_id, stationName: c.stations?.name || '', chargePercent: c.charge_percent, connectedVehicle: c.connected_vehicle, lastUpdate: c.last_update }));
 }
 
 async function getHistory({ stationName, memberType, dateFrom, dateTo, search } = {}) {
@@ -84,6 +84,7 @@ async function getFaults({ status } = {}) {
   if (error) { console.error('faults:', error); return FAULTS; }
   return data.map(f => ({
     ...f,
+    stationId:   f.station_id,
     stationName: f.stations?.name || '',
     chargerId:   f.chargers?.id  || f.charger_id,
     reportedAt:  new Date(f.reported_at).toLocaleString('ko-KR').slice(0,-3),

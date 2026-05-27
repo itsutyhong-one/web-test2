@@ -248,27 +248,25 @@
       document.getElementById(id).classList.remove('open');
     }
 
-    function addStation() {
+    async function addStation() {
       const id = document.getElementById('newStId').value.trim();
       const name = document.getElementById('newStName').value.trim();
       const region = document.getElementById('newStRegion').value;
       const address = document.getElementById('newStAddr').value.trim();
       if (!id || !name || !address) { showToast('필수 항목을 모두 입력해주세요.', 'error'); return; }
-      // TODO: Supabase INSERT
-      STATIONS.push({ id, name, region, address, chargerCount: 0, status: 'normal' });
+      await insertStation({ id, name, region, address, lat: null, lng: null, status: 'normal' });
       closeModal('addStationModal');
       renderStations();
       showToast('충전소가 추가되었습니다.');
     }
 
-    function addCharger() {
+    async function addCharger() {
       if (!selectedStationId) return;
       const port = document.getElementById('newChPort').value.trim();
       const type = document.getElementById('newChType').value;
       if (!port) { showToast('포트명을 입력해주세요.', 'error'); return; }
       const newId = 'CHG' + String(CHARGERS.length + 1).padStart(4, '0');
-      // TODO: Supabase INSERT
-      CHARGERS.push({ id: newId, stationId: selectedStationId, stationName: '', port, type, status: 'offline', lastUpdate: new Date().toISOString() });
+      await insertCharger({ id: newId, stationId: selectedStationId, port, type, status: 'offline' });
       closeModal('addChargerModal');
       showChargers(selectedStationId);
       showToast('충전기가 추가되었습니다.');
@@ -276,7 +274,8 @@
 
     document.getElementById('searchStation').addEventListener('keydown', e => { if (e.key === 'Enter') renderStations(); });
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      await initData();
       renderStations();
     });
   </script>

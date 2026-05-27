@@ -78,6 +78,21 @@ const NOTICES = [
   { id: 'NTC005', title: '프리미엄 회원 요금 개편 안내', category: '공지', status: '예약', author: '관리자', createdAt: '2026-04-01', content: '2026.05.01부터 프리미엄 회원 요금이 개편됩니다.' },
 ];
 
+async function initData() {
+  const [stations, chargers, history, faults, notices] = await Promise.all([
+    getStations(), getChargers(), getHistory(), getFaults(), getNotices()
+  ]);
+  STATIONS.length = 0; STATIONS.push(...stations);
+  CHARGERS.length = 0; CHARGERS.push(...chargers);
+  HISTORY.length  = 0; HISTORY.push(...history);
+  FAULTS.length   = 0; FAULTS.push(...faults);
+  NOTICES.length  = 0; NOTICES.push(...notices);
+  // recalculate chargerCount per station
+  const countMap = {};
+  CHARGERS.forEach(c => { countMap[c.stationId] = (countMap[c.stationId] || 0) + 1; });
+  STATIONS.forEach(s => { s.chargerCount = countMap[s.id] || 0; });
+}
+
 // =============================================
 // UTILS
 // =============================================
