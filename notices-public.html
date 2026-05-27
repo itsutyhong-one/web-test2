@@ -117,6 +117,14 @@
     </div>
   </div>
 
+  <!-- 공지 상세 모달 -->
+  <div id="noticeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:900;overflow-y:auto;padding:60px 16px 40px;">
+    <div style="max-width:700px;margin:0 auto;background:#fff;border-radius:20px;padding:2.5rem;position:relative;box-shadow:0 24px 64px rgba(0,0,0,0.25);">
+      <button onclick="closeNoticeModal()" style="position:absolute;top:1.2rem;right:1.2rem;background:none;border:none;font-size:1.4rem;cursor:pointer;color:#aaa;line-height:1;">✕</button>
+      <div id="noticeModalContent"></div>
+    </div>
+  </div>
+
   <div class="subpage-content">
     <div class="container">
       <div class="notices-header">
@@ -170,13 +178,19 @@
   <script src="supabase-public.js"></script>
   <script src="script.js"></script>
   <script>
-  // Hardcoded fallback data
+  let loadedNotices = [];
+
   const FALLBACK_NOTICES = [
-    { id:'NTC001', title:'2026년 상반기 신규 충전소 20개소 추가 오픈 안내', category:'공지', createdAt:'2026-05-20' },
-    { id:'NTC002', title:'KDN Charge 앱 v3.2 업데이트 안내 (충전 예약 기능 추가)', category:'공지', createdAt:'2026-05-10' },
-    { id:'NTC003', title:'고속도로 휴게소 충전소 정기 점검 일정 안내 (5월)', category:'점검', createdAt:'2026-04-30' },
-    { id:'NTC004', title:'신규 회원 가입 이벤트 — 첫 충전 50% 할인 쿠폰 증정', category:'이벤트', createdAt:'2026-04-15' },
-    { id:'NTC005', title:'프리미엄 회원 요금 개편 안내 (2026.05.01 적용)', category:'공지', createdAt:'2026-04-01' },
+    { id:'NTC001', title:'2026년 상반기 신규 충전소 20개소 추가 오픈 안내', category:'공지', createdAt:'2026-05-20',
+      content:'<p>2026년 상반기 신규 충전소 20개소가 추가 오픈됩니다. 수도권·충청·영남·호남 거점에 각각 배치되며, 모든 신규 충전소에 350kW 초급속 충전기가 설치됩니다.</p>' },
+    { id:'NTC002', title:'KDN Charge 앱 v3.2 업데이트 안내 (충전 예약 기능 추가)', category:'공지', createdAt:'2026-05-10',
+      content:'<p>앱 v3.2 업데이트로 충전 예약, 충전 완료 사전 알림, 영수증 PDF 다운로드 기능이 추가되었습니다.</p>' },
+    { id:'NTC003', title:'고속도로 휴게소 충전소 정기 점검 일정 안내 (5월)', category:'점검', createdAt:'2026-04-30',
+      content:'<p>5월 정기 점검이 경부선·서해안선·중부선 순서로 진행됩니다. 해당 기간 인근 충전소를 이용해 주세요.</p>' },
+    { id:'NTC004', title:'신규 회원 가입 이벤트 — 첫 충전 50% 할인 쿠폰 증정', category:'이벤트', createdAt:'2026-04-15',
+      content:'<p>2026.04.15~06.30 기간 내 신규 가입 회원에게 첫 충전 50% 할인 쿠폰(최대 1만원)을 드립니다.</p>' },
+    { id:'NTC005', title:'요금 체계 개편 안내 (2026.06.01 적용)', category:'공지', createdAt:'2026-04-01',
+      content:'<p>전력 구입 비용 상승으로 2026.06.01부터 요금이 일부 조정됩니다. 비회원 420원, 일반 회원 320원, 프리미엄 285원/kWh입니다.</p>' },
   ];
 
   function categoryBadgeClass(cat) {
@@ -185,18 +199,45 @@
     return '';
   }
 
+  function openNoticeModal(id) {
+    const n = loadedNotices.find(x => x.id === id);
+    if (!n) return;
+    document.getElementById('noticeModalContent').innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem;">
+        <span class="notice-badge ${categoryBadgeClass(n.category)}" style="position:static;">${n.category}</span>
+        <span style="font-size:0.82rem;color:#aaa;">${n.createdAt?.replace(/-/g,'.')}</span>
+      </div>
+      <h2 style="font-size:1.25rem;font-weight:900;color:#1a1a2e;margin-bottom:1.5rem;line-height:1.5;">${n.title}</h2>
+      <hr style="border:none;border-top:1px solid #eee;margin-bottom:1.5rem;">
+      <div style="font-size:0.95rem;line-height:1.9;color:#444;">${n.content || '<p>내용을 불러올 수 없습니다.</p>'}</div>
+    `;
+    document.getElementById('noticeModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeNoticeModal() {
+    document.getElementById('noticeModal').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNoticeModal(); });
+
   function renderNoticeList(items) {
+    loadedNotices = items;
     document.querySelector('.notices-total strong').textContent = items.length;
     document.querySelector('.notices-full-list').innerHTML = items.map((n, i) => `
-      <div class="notices-full-item">
+      <div class="notices-full-item" onclick="openNoticeModal('${n.id}')" style="cursor:pointer;">
         <span class="notice-badge ${i === 0 ? 'new' : categoryBadgeClass(n.category)}">${i === 0 ? 'NEW' : n.category}</span>
-        <a href="#" class="notices-full-title">${n.title}</a>
+        <span class="notices-full-title">${n.title}</span>
         <span class="notices-full-date">${n.createdAt?.replace(/-/g,'.')}</span>
       </div>
     `).join('');
   }
 
   document.addEventListener('DOMContentLoaded', async () => {
+    document.getElementById('noticeModal').addEventListener('click', e => {
+      if (e.target === document.getElementById('noticeModal')) closeNoticeModal();
+    });
     const items = await getPublicNotices();
     renderNoticeList(items || FALLBACK_NOTICES);
     document.querySelectorAll('.nav a').forEach(a => {

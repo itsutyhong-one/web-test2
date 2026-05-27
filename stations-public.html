@@ -6,7 +6,6 @@
   <title>KDN Charge — 충전소 찾기</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css"/>
-  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <style>
     .header.scrolled { background: rgba(10,12,30,0.98); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
     .subpage-hero {
@@ -53,20 +52,44 @@
       display: block;
       margin: 0 auto;
     }
-    .map-legend {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 0.8rem;
-      justify-content: center;
+    /* station info panel */
+    .station-info-panel {
+      background: linear-gradient(160deg, #0d1f3c 0%, #0a2a1e 100%);
+      border-radius: 20px;
+      padding: 2rem;
+      color: #fff;
+      position: sticky;
+      top: 90px;
     }
-    .legend-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: #00c896;
-      display: inline-block;
+    .sip-logo { display: flex; align-items: center; gap: 8px; font-size: 1rem; font-weight: 700; margin-bottom: 1.5rem; color: #00c896; }
+    .sip-total { text-align: center; padding: 1.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 1.5rem; }
+    .sip-total-num { font-size: 3.2rem; font-weight: 900; color: #00c896; display: block; line-height: 1; }
+    .sip-total-label { font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-top: 0.4rem; display: block; }
+    .sip-search { margin-bottom: 1.5rem; }
+    .sip-search input {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      font-size: 0.88rem;
+      outline: none;
+      font-family: inherit;
     }
-    .legend-text { font-size: 0.8rem; color: #888; }
+    .sip-search input::placeholder { color: rgba(255,255,255,0.4); }
+    .sip-search input:focus { border-color: #00c896; background: rgba(0,200,150,0.08); }
+    .sip-features { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; }
+    .sip-feature { display: flex; align-items: center; gap: 10px; font-size: 0.87rem; color: rgba(255,255,255,0.75); }
+    .sip-feature-icon { width: 32px; height: 32px; border-radius: 8px; background: rgba(0,200,150,0.15); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .sip-app-btn {
+      display: block; text-align: center;
+      background: #00c896; color: #fff;
+      border-radius: 10px; padding: 12px;
+      font-weight: 700; font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    .sip-app-btn:hover { background: #00a87a; }
 
     /* region list */
     .stations-region-wrap h2 {
@@ -147,16 +170,39 @@
   <div class="subpage-content">
     <div class="container">
       <div class="stations-layout">
-        <!-- 지도 -->
-        <div class="stations-map-wrap">
-          <div class="map-label">전국 충전소 현황</div>
-          <div class="map-container">
-            <svg class="korea-map" id="koreaMapSvg" xmlns="http://www.w3.org/2000/svg"></svg>
-            <div class="map-legend">
-              <span class="legend-dot"></span>
-              <span class="legend-text">KDN Charge 충전소</span>
+        <!-- 정보 패널 -->
+        <div class="station-info-panel">
+          <div class="sip-logo">⚡ KDN Charge</div>
+          <div class="sip-total">
+            <span class="sip-total-num" id="sipTotalNum">-</span>
+            <span class="sip-total-label">전국 충전소 운영 중</span>
+          </div>
+          <div class="sip-search">
+            <input type="text" id="regionSearchInput" placeholder="🔍  지역명으로 검색..." oninput="filterRegions(this.value)"/>
+          </div>
+          <div class="sip-features">
+            <div class="sip-feature">
+              <div class="sip-feature-icon">⚡</div>
+              <span>최대 350kW 초급속 충전</span>
+            </div>
+            <div class="sip-feature">
+              <div class="sip-feature-icon">📍</div>
+              <span>고속도로 · 도심 거점 배치</span>
+            </div>
+            <div class="sip-feature">
+              <div class="sip-feature-icon">🕐</div>
+              <span>24시간 365일 운영</span>
+            </div>
+            <div class="sip-feature">
+              <div class="sip-feature-icon">📱</div>
+              <span>앱으로 실시간 빈자리 확인</span>
+            </div>
+            <div class="sip-feature">
+              <div class="sip-feature-icon">🛡️</div>
+              <span>CCTV · 화재감지 안심 환경</span>
             </div>
           </div>
+          <a href="#" class="sip-app-btn">📱 앱 다운로드</a>
         </div>
 
         <!-- 지역별 리스트 -->
@@ -215,31 +261,35 @@
   <script src="script.js"></script>
   <script>
     const REGION_META = {
-      '서울': { icon: '🏙️' }, '경기': { icon: '🏙️' }, '인천': { icon: '🚢' },
-      '부산': { icon: '⚓' }, '대구': { icon: '🌄' }, '광주': { icon: '🌊' },
-      '대전': { icon: '🌾' }, '충청': { icon: '🌾' }, '충북': { icon: '🌾' }, '충남': { icon: '🌾' },
-      '전라': { icon: '🌊' }, '전북': { icon: '🌊' }, '전남': { icon: '🌊' },
-      '경상': { icon: '🌄' }, '경북': { icon: '🌄' }, '경남': { icon: '🌄' },
-      '강원': { icon: '🏔️' }, '제주': { icon: '🏝️' },
+      '서울': '🏙️', '경기': '🏙️', '인천': '🚢',
+      '부산': '⚓', '대구': '🌄', '광주': '🌊',
+      '대전': '🌾', '충청': '🌾', '충북': '🌾', '충남': '🌾',
+      '전라': '🌊', '전북': '🌊', '전남': '🌊',
+      '경상': '🌄', '경북': '🌄', '경남': '🌄',
+      '강원': '🏔️', '제주': '🏝️',
     };
 
-    const FALLBACK_REGIONS = [
-      { region: '서울', count: 2 }, { region: '경기', count: 1 }, { region: '인천', count: 1 },
-      { region: '부산', count: 1 }, { region: '대구', count: 1 }, { region: '광주', count: 1 },
-      { region: '대전', count: 1 }, { region: '강원', count: 1 }, { region: '제주', count: 1 },
-    ];
+    let allRegionGroups = [];
 
-    function renderRegionList(regionGroups, total) {
-      document.getElementById('stationTotalCount').textContent = total;
-      document.getElementById('regionList').innerHTML = regionGroups.map(r => `
-        <div class="region-item">
-          <div class="region-item-left">
-            <span class="region-icon">${REGION_META[r.region]?.icon || '📍'}</span>
-            <span class="region-name">${r.region}</span>
+    function renderRegionList(groups) {
+      document.getElementById('regionList').innerHTML = groups.length === 0
+        ? '<div style="text-align:center;padding:2rem;color:#aaa;">검색 결과가 없습니다.</div>'
+        : groups.map(r => `
+          <div class="region-item">
+            <div class="region-item-left">
+              <span class="region-icon">${REGION_META[r.region] || '📍'}</span>
+              <span class="region-name">${r.region}</span>
+            </div>
+            <span class="region-count">충전소 ${r.count}개소</span>
           </div>
-          <span class="region-count">충전소 ${r.count}개소</span>
-        </div>
-      `).join('');
+        `).join('');
+    }
+
+    function filterRegions(q) {
+      const filtered = q.trim()
+        ? allRegionGroups.filter(r => r.region.includes(q.trim()))
+        : allRegionGroups;
+      renderRegionList(filtered);
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -248,14 +298,23 @@
       if (stations && stations.length > 0) {
         const countMap = {};
         stations.forEach(s => { countMap[s.region] = (countMap[s.region] || 0) + 1; });
-        const groups = Object.entries(countMap)
+        allRegionGroups = Object.entries(countMap)
           .map(([region, count]) => ({ region, count }))
           .sort((a, b) => b.count - a.count);
-        renderRegionList(groups, stations.length);
+        const total = stations.length;
+        document.getElementById('stationTotalCount').textContent = total;
+        document.getElementById('sipTotalNum').textContent = total;
       } else {
-        const total = FALLBACK_REGIONS.reduce((s, r) => s + r.count, 0);
-        renderRegionList(FALLBACK_REGIONS, total);
+        allRegionGroups = [
+          { region:'서울', count:2 }, { region:'경기', count:1 }, { region:'인천', count:1 },
+          { region:'부산', count:1 }, { region:'대구', count:1 }, { region:'광주', count:1 },
+          { region:'대전', count:1 }, { region:'강원', count:1 }, { region:'제주', count:1 },
+        ];
+        const total = allRegionGroups.reduce((s, r) => s + r.count, 0);
+        document.getElementById('stationTotalCount').textContent = total;
+        document.getElementById('sipTotalNum').textContent = total;
       }
+      renderRegionList(allRegionGroups);
 
       document.querySelectorAll('.nav a').forEach(a => {
         if (a.href === location.href) a.style.color = '#00c896';

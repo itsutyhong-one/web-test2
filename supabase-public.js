@@ -13,7 +13,7 @@
 
   window.getPublicNotices = async function({ category } = {}) {
     if (!db) return null; // caller uses fallback hardcoded data
-    let q = db.from('notices').select('id,title,category,created_at').eq('status', '게시중').order('created_at', { ascending: false });
+    let q = db.from('notices').select('*').eq('status', '게시중').order('created_at', { ascending: false });
     if (category) q = q.eq('category', category);
     const { data, error } = await q;
     if (error) { console.error('notices:', error); return null; }
