@@ -6,6 +6,7 @@
   <title>KDN Charge — 충전소 찾기</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <style>
     .header.scrolled { background: rgba(10,12,30,0.98); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
     .subpage-hero {
@@ -105,6 +106,9 @@
       font-weight: 700;
     }
 
+    /* 밝은 배경에서 레이블 색상 보정 */
+    .map-region-label { fill: rgba(30,40,60,0.55) !important; }
+
     @media (max-width: 768px) {
       .stations-layout { grid-template-columns: 1fr; }
     }
@@ -147,96 +151,7 @@
         <div class="stations-map-wrap">
           <div class="map-label">전국 충전소 현황</div>
           <div class="map-container">
-            <svg class="korea-map" viewBox="0 0 360 480" xmlns="http://www.w3.org/2000/svg">
-              <!-- 대한민국 본토 윤곽 -->
-              <path class="korea-outline" d="
-                M 148,52
-                L 172,44 L 198,41 L 220,45 L 242,55 L 258,68
-                L 268,84 L 274,102 L 272,122 L 268,144
-                L 272,166 L 274,190 L 268,212 L 262,234
-                L 256,254 L 252,272 L 245,286 L 233,298
-                L 215,308 L 192,313 L 168,311 L 144,302
-                L 125,289 L 110,272 L 102,255 L 95,236
-                L 88,215 L 83,193 L 79,170 L 82,152
-                L 90,140 L 82,122 L 77,103 L 80,83
-                L 88,67 L 100,56 Z
-              "/>
-              <!-- 서해안 태안반도 돌출부 (단순화) -->
-              <path class="korea-coast" d="M 79,170 L 72,165 L 79,158" fill="none"/>
-
-              <!-- 제주도 -->
-              <ellipse class="jeju-outline" cx="172" cy="372" rx="36" ry="17"/>
-
-              <!-- 충전소 위치 점 — 서울/경기 -->
-              <circle class="station" cx="170" cy="108" r="5"/>
-              <circle class="station" cx="185" cy="100" r="4.5"/>
-              <circle class="station" cx="158" cy="105" r="4"/>
-              <circle class="station" cx="195" cy="112" r="4.5"/>
-              <circle class="station" cx="205" cy="103" r="3.5"/>
-              <circle class="station" cx="165" cy="92" r="3.5"/>
-              <circle class="station" cx="180" cy="118" r="4"/>
-              <circle class="station" cx="150" cy="113" r="3.5"/>
-
-              <!-- 강원 -->
-              <circle class="station" cx="228" cy="95" r="4.5"/>
-              <circle class="station" cx="245" cy="108" r="4"/>
-              <circle class="station" cx="258" cy="120" r="3.5"/>
-              <circle class="station" cx="238" cy="118" r="3.5"/>
-
-              <!-- 충청 -->
-              <circle class="station" cx="155" cy="152" r="5"/>
-              <circle class="station" cx="172" cy="160" r="4.5"/>
-              <circle class="station" cx="190" cy="150" r="4"/>
-              <circle class="station" cx="140" cy="162" r="3.5"/>
-              <circle class="station" cx="205" cy="158" r="3.5"/>
-              <circle class="station" cx="165" cy="172" r="4"/>
-
-              <!-- 전라 -->
-              <circle class="station" cx="122" cy="202" r="5"/>
-              <circle class="station" cx="138" cy="215" r="4.5"/>
-              <circle class="station" cx="112" cy="222" r="4"/>
-              <circle class="station" cx="132" cy="232" r="3.5"/>
-              <circle class="station" cx="148" cy="225" r="4"/>
-              <circle class="station" cx="118" cy="242" r="3.5"/>
-              <circle class="station" cx="142" cy="248" r="3.5"/>
-              <circle class="station" cx="128" cy="260" r="3.5"/>
-
-              <!-- 경상 -->
-              <circle class="station" cx="205" cy="195" r="5"/>
-              <circle class="station" cx="222" cy="205" r="4.5"/>
-              <circle class="station" cx="212" cy="218" r="4"/>
-              <circle class="station" cx="235" cy="215" r="4"/>
-              <circle class="station" cx="222" cy="232" r="4.5"/>
-              <circle class="station" cx="240" cy="228" r="3.5"/>
-              <circle class="station" cx="210" cy="240" r="3.5"/>
-              <circle class="station" cx="232" cy="248" r="4"/>
-              <circle class="station" cx="246" cy="240" r="3.5"/>
-
-              <!-- 부산/경남 -->
-              <circle class="station" cx="228" cy="268" r="5"/>
-              <circle class="station" cx="215" cy="278" r="4.5"/>
-              <circle class="station" cx="240" cy="272" r="4"/>
-              <circle class="station" cx="205" cy="288" r="3.5"/>
-
-              <!-- 광주/전남 -->
-              <circle class="station" cx="130" cy="268" r="5"/>
-              <circle class="station" cx="142" cy="278" r="4"/>
-              <circle class="station" cx="122" cy="280" r="3.5"/>
-              <circle class="station" cx="135" cy="292" r="3.5"/>
-
-              <!-- 제주 -->
-              <circle class="station-jeju" cx="152" cy="372" r="4.5"/>
-              <circle class="station-jeju" cx="172" cy="368" r="4"/>
-              <circle class="station-jeju" cx="190" cy="373" r="3.5"/>
-
-              <!-- 지역 레이블 -->
-              <text class="map-region-label" x="178" y="107">서울·경기</text>
-              <text class="map-region-label" x="242" y="112">강원</text>
-              <text class="map-region-label" x="172" y="162">충청</text>
-              <text class="map-region-label" x="124" y="238">전라</text>
-              <text class="map-region-label" x="222" y="222">경상</text>
-              <text class="map-region-label" x="172" y="360">제주</text>
-            </svg>
+            <svg class="korea-map" id="koreaMapSvg" xmlns="http://www.w3.org/2000/svg"></svg>
             <div class="map-legend">
               <span class="legend-dot"></span>
               <span class="legend-text">KDN Charge 충전소</span>
