@@ -162,57 +162,9 @@
         <!-- 지역별 리스트 -->
         <div class="stations-region-wrap">
           <h2>지역별 <span class="highlight">충전소 현황</span></h2>
-          <p>지역을 선택하여 가까운 충전소를 찾아보세요.</p>
-          <div class="region-list">
-            <div class="region-item">
-              <div class="region-item-left">
-                <span class="region-icon">🏙️</span>
-                <span class="region-name">서울 / 경기</span>
-              </div>
-              <span class="region-count">충전소 52개소</span>
-            </div>
-            <div class="region-item">
-              <div class="region-item-left">
-                <span class="region-icon">🏔️</span>
-                <span class="region-name">강원</span>
-              </div>
-              <span class="region-count">충전소 18개소</span>
-            </div>
-            <div class="region-item">
-              <div class="region-item-left">
-                <span class="region-icon">🌾</span>
-                <span class="region-name">충청</span>
-              </div>
-              <span class="region-count">충전소 32개소</span>
-            </div>
-            <div class="region-item">
-              <div class="region-item-left">
-                <span class="region-icon">🌊</span>
-                <span class="region-name">전라</span>
-              </div>
-              <span class="region-count">충전소 38개소</span>
-            </div>
-            <div class="region-item">
-              <div class="region-item-left">
-                <span class="region-icon">🌄</span>
-                <span class="region-name">경상</span>
-              </div>
-              <span class="region-count">충전소 42개소</span>
-            </div>
-            <div class="region-item">
-              <div class="region-item-left">
-                <span class="region-icon">🚢</span>
-                <span class="region-name">부산</span>
-              </div>
-              <span class="region-count">충전소 12개소</span>
-            </div>
-            <div class="region-item">
-              <div class="region-item-left">
-                <span class="region-icon">🏝️</span>
-                <span class="region-name">제주</span>
-              </div>
-              <span class="region-count">충전소 6개소</span>
-            </div>
+          <p>총 <strong id="stationTotalCount">-</strong>개소 운영 중 · 지역을 선택하여 가까운 충전소를 찾아보세요.</p>
+          <div class="region-list" id="regionList">
+            <div style="text-align:center;padding:2rem;color:#aaa;font-size:0.9rem;">데이터를 불러오는 중...</div>
           </div>
         </div>
       </div>
@@ -257,10 +209,57 @@
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="admin/env.js"></script>
+  <script src="supabase-public.js"></script>
   <script src="script.js"></script>
   <script>
-    document.querySelectorAll('.nav a').forEach(a => {
-      if (a.href === location.href) a.style.color = '#00c896';
+    const REGION_META = {
+      '서울': { icon: '🏙️' }, '경기': { icon: '🏙️' }, '인천': { icon: '🚢' },
+      '부산': { icon: '⚓' }, '대구': { icon: '🌄' }, '광주': { icon: '🌊' },
+      '대전': { icon: '🌾' }, '충청': { icon: '🌾' }, '충북': { icon: '🌾' }, '충남': { icon: '🌾' },
+      '전라': { icon: '🌊' }, '전북': { icon: '🌊' }, '전남': { icon: '🌊' },
+      '경상': { icon: '🌄' }, '경북': { icon: '🌄' }, '경남': { icon: '🌄' },
+      '강원': { icon: '🏔️' }, '제주': { icon: '🏝️' },
+    };
+
+    const FALLBACK_REGIONS = [
+      { region: '서울', count: 2 }, { region: '경기', count: 1 }, { region: '인천', count: 1 },
+      { region: '부산', count: 1 }, { region: '대구', count: 1 }, { region: '광주', count: 1 },
+      { region: '대전', count: 1 }, { region: '강원', count: 1 }, { region: '제주', count: 1 },
+    ];
+
+    function renderRegionList(regionGroups, total) {
+      document.getElementById('stationTotalCount').textContent = total;
+      document.getElementById('regionList').innerHTML = regionGroups.map(r => `
+        <div class="region-item">
+          <div class="region-item-left">
+            <span class="region-icon">${REGION_META[r.region]?.icon || '📍'}</span>
+            <span class="region-name">${r.region}</span>
+          </div>
+          <span class="region-count">충전소 ${r.count}개소</span>
+        </div>
+      `).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const stations = await getPublicStations();
+
+      if (stations && stations.length > 0) {
+        const countMap = {};
+        stations.forEach(s => { countMap[s.region] = (countMap[s.region] || 0) + 1; });
+        const groups = Object.entries(countMap)
+          .map(([region, count]) => ({ region, count }))
+          .sort((a, b) => b.count - a.count);
+        renderRegionList(groups, stations.length);
+      } else {
+        const total = FALLBACK_REGIONS.reduce((s, r) => s + r.count, 0);
+        renderRegionList(FALLBACK_REGIONS, total);
+      }
+
+      document.querySelectorAll('.nav a').forEach(a => {
+        if (a.href === location.href) a.style.color = '#00c896';
+      });
     });
   </script>
 </body>

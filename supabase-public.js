@@ -26,4 +26,11 @@
     if (error) return null;
     return { ...data, createdAt: data.created_at?.slice(0,10) || '' };
   };
+
+  window.getPublicStations = async function() {
+    if (!db) return null;
+    const { data, error } = await db.from('stations').select('id,name,region,address,status').order('region');
+    if (error) { console.error('stations:', error); return null; }
+    return data;
+  };
 })();
