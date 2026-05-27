@@ -5,7 +5,7 @@
 html { font-size: 15px; }
 body {
   font-family: 'Noto Sans KR', -apple-system, sans-serif;
-  background: #f0f2f7;
+  background: #edf0f5;
   color: #1a1a2e;
   display: flex;
   min-height: 100vh;
@@ -153,12 +153,14 @@ button { cursor: pointer; font-family: inherit; }
 .card {
   background: #fff;
   border-radius: 14px;
-  border: 1px solid #e8eaf0;
+  border: 1.5px solid #d8dce8;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   overflow: hidden;
 }
 .card-header {
-  padding: 18px 24px;
-  border-bottom: 1px solid #f0f2f7;
+  padding: 16px 24px;
+  border-bottom: 1.5px solid #e4e8f0;
+  background: #f7f9fc;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -178,7 +180,8 @@ button { cursor: pointer; font-family: inherit; }
 .stat-card {
   background: #fff;
   border-radius: 14px;
-  border: 1px solid #e8eaf0;
+  border: 1.5px solid #d8dce8;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   padding: 20px 24px;
   display: flex;
   align-items: center;
@@ -207,23 +210,23 @@ button { cursor: pointer; font-family: inherit; }
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
 thead th {
-  padding: 12px 16px;
+  padding: 11px 16px;
   text-align: left;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 700;
-  color: #888;
+  color: #666;
   letter-spacing: 0.05em;
-  background: #f8f9fc;
-  border-bottom: 1px solid #e8eaf0;
+  background: #f0f3f8;
+  border-bottom: 2px solid #d8dce8;
 }
 tbody td {
   padding: 13px 16px;
-  border-bottom: 1px solid #f0f2f7;
+  border-bottom: 1px solid #e8ecf2;
   color: #333;
   vertical-align: middle;
 }
 tbody tr:last-child td { border-bottom: none; }
-tbody tr:hover { background: #f8f9fc; }
+tbody tr:hover { background: #f5f7fb; }
 
 /* ===========================
    STATUS BADGES
@@ -309,9 +312,9 @@ tbody tr:hover { background: #f8f9fc; }
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 16px 24px;
-  background: #f8f9fc;
-  border-bottom: 1px solid #e8eaf0;
+  padding: 14px 20px;
+  background: #f0f3f8;
+  border-bottom: 1.5px solid #d8dce8;
 }
 .filter-bar .form-input,
 .filter-bar .form-select {
@@ -546,6 +549,34 @@ tbody tr:hover { background: #f8f9fc; }
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ===========================
+   CHARGER TYPE BADGES
+=========================== */
+.charger-type-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 0.73rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.type-ultra { background: #fff0e8; color: #c2410c; border: 1px solid #fcd0b8; }
+.type-fast { background: #e8f0ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.type-slow { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+
+/* Member type badges */
+.member-badge {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 100px;
+  font-size: 0.73rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+.member-regular { background: #2563eb; }
+.member-guest { background: #6b7280; }
 
 /* ===========================
    RESPONSIVE

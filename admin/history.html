@@ -38,9 +38,8 @@
           </select>
           <select class="form-select" id="filterMember">
             <option value="">전체 회원유형</option>
+            <option>회원</option>
             <option>비회원</option>
-            <option>일반회원</option>
-            <option>프리미엄</option>
           </select>
           <input class="form-input" id="filterDateFrom" type="date" style="width:140px;"/>
           <span style="font-size:0.85rem;color:#888;">~</span>
@@ -84,7 +83,7 @@
         <div class="stat-card"><div class="stat-card-icon blue">📋</div><div><div class="stat-card-num">${filtered.length}</div><div class="stat-card-label">총 충전 건수</div></div></div>
         <div class="stat-card"><div class="stat-card-icon green">⚡</div><div><div class="stat-card-num">${totalKwh}</div><div class="stat-card-label">총 충전량(kWh)</div></div></div>
         <div class="stat-card"><div class="stat-card-icon orange">💰</div><div><div class="stat-card-num">${(totalAmt/10000).toFixed(0)}만</div><div class="stat-card-label">총 결제 금액(원)</div></div></div>
-        <div class="stat-card"><div class="stat-card-icon red">👥</div><div><div class="stat-card-num">${filtered.filter(h=>h.memberType!=='비회원').length}</div><div class="stat-card-label">회원 충전 건수</div></div></div>
+        <div class="stat-card"><div class="stat-card-icon red">👥</div><div><div class="stat-card-num">${filtered.filter(h => h.memberType !== '비회원').length}</div><div class="stat-card-label">회원 충전 건수</div></div></div>
       `;
     }
 
@@ -124,9 +123,7 @@
           <td><strong>${h.kwh}</strong></td>
           <td><strong>${formatKrw(h.amount)}</strong></td>
           <td>
-            <span style="background:${h.memberType==='프리미엄'?'rgba(0,200,150,0.1)':h.memberType==='일반회원'?'rgba(37,99,235,0.1)':'#f0f2f7'};
-                         color:${h.memberType==='프리미엄'?'#00a87a':h.memberType==='일반회원'?'#2563eb':'#888'};
-                         padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:600;">
+            <span class="member-badge ${h.memberType === '회원' ? 'member-regular' : 'member-guest'}">
               ${h.memberType}
             </span>
           </td>

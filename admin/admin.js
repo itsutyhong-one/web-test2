@@ -58,7 +58,7 @@ const HISTORY = Array.from({ length: 80 }, (_, i) => {
     duration,
     kwh,
     amount: Math.round(kwh * rate),
-    memberType: ['비회원', '일반회원', '프리미엄'][Math.floor(Math.random()*3)],
+    memberType: ['회원', '비회원'][Math.floor(Math.random()*2)],
   };
 }).sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
 

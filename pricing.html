@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KDN Charge — 요금 안내</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    .header.scrolled { background: rgba(10,12,30,0.98); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    .subpage-hero {
+      background: linear-gradient(135deg, #0a0c1e 0%, #0d1f3c 60%, #0a2a1e 100%);
+      padding: 120px 0 60px;
+      text-align: center;
+      color: #fff;
+    }
+    .subpage-hero h1 { font-size: 2.2rem; font-weight: 900; margin-bottom: 0.5rem; }
+    .subpage-hero p { color: rgba(255,255,255,0.65); }
+    .subpage-content { padding: 60px 0 100px; background: #f8f9fc; }
+  </style>
+</head>
+<body>
+  <header class="header scrolled" id="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">KDN<span class="logo-accent">Charge</span></span>
+      </a>
+      <nav class="nav" id="nav">
+        <a href="service.html">서비스 소개</a>
+        <a href="charger.html">충전기 안내</a>
+        <a href="stations-public.html">충전소 찾기</a>
+        <a href="pricing.html">요금 안내</a>
+        <a href="notices-public.html">공지사항</a>
+        <a href="contact.html">고객센터</a>
+      </nav>
+      <a href="admin/index.html" class="btn-admin-link" target="_blank">운영시스템 →</a>
+      <button class="btn-app-download">앱 다운로드</button>
+      <button class="hamburger" id="hamburger" aria-label="메뉴">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <div class="subpage-hero">
+    <div class="container">
+      <h1>요금 안내</h1>
+      <p>회원 가입만으로 더 저렴하게 충전하세요.</p>
+    </div>
+  </div>
+
+  <div class="subpage-content">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">PRICING</span>
+        <h2 class="section-title">합리적인 <span class="highlight">충전 요금</span></h2>
+        <p class="section-desc">회원 가입만으로 더 저렴하게 충전하세요.</p>
+      </div>
+      <div class="pricing-cards">
+        <div class="pricing-card">
+          <div class="pricing-type">비회원</div>
+          <div class="pricing-price">
+            <span class="price-num">400</span>
+            <span class="price-unit">원/kWh</span>
+          </div>
+          <p class="pricing-desc">별도 가입 없이 신용카드 즉시 결제</p>
+          <ul class="pricing-features">
+            <li>✓ 신용/체크카드 결제</li>
+            <li>✓ 로밍 카드 사용 가능</li>
+            <li class="disabled">✗ 포인트 적립</li>
+            <li class="disabled">✗ 할인 혜택</li>
+          </ul>
+          <a href="#" class="btn btn-outline-dark">바로 이용하기</a>
+        </div>
+        <div class="pricing-card featured">
+          <div class="pricing-badge">추천</div>
+          <div class="pricing-type">일반 회원</div>
+          <div class="pricing-price">
+            <span class="price-num">310</span>
+            <span class="price-unit">원/kWh</span>
+          </div>
+          <p class="pricing-desc">앱 회원 가입 후 즉시 적용</p>
+          <ul class="pricing-features">
+            <li>✓ 신용/체크카드 결제</li>
+            <li>✓ 앱 간편 결제</li>
+            <li>✓ 충전 포인트 1% 적립</li>
+            <li>✓ 이용 내역 관리</li>
+          </ul>
+          <a href="#" class="btn btn-primary">무료 회원가입</a>
+        </div>
+        <div class="pricing-card">
+          <div class="pricing-type">프리미엄 회원</div>
+          <div class="pricing-price">
+            <span class="price-num">275</span>
+            <span class="price-unit">원/kWh</span>
+          </div>
+          <p class="pricing-desc">월 9,900원 구독 | 연간 결제 시 추가 할인</p>
+          <ul class="pricing-features">
+            <li>✓ 최저가 충전 단가</li>
+            <li>✓ 앱 간편 결제</li>
+            <li>✓ 충전 포인트 3% 적립</li>
+            <li>✓ 우선 예약 서비스</li>
+          </ul>
+          <a href="#" class="btn btn-outline-dark">구독 시작하기</a>
+        </div>
+      </div>
+      <p class="pricing-note">※ 요금은 부가세 포함 기준이며, 전력 비용 변동에 따라 변경될 수 있습니다.</p>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">KDN<span class="logo-accent">Charge</span></span>
+        <p class="footer-slogan">초급속 충전의 새로운 기준</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <strong>서비스</strong>
+          <a href="stations-public.html">충전소 찾기</a>
+          <a href="charger.html">충전기 안내</a>
+          <a href="pricing.html">요금 안내</a>
+          <a href="#">앱 다운로드</a>
+        </div>
+        <div class="footer-col">
+          <strong>회사</strong>
+          <a href="#">회사 소개</a>
+          <a href="#">사업 제휴</a>
+          <a href="#">채용 안내</a>
+          <a href="#">뉴스룸</a>
+        </div>
+        <div class="footer-col">
+          <strong>고객 지원</strong>
+          <a href="notices-public.html">공지사항</a>
+          <a href="#">자주 묻는 질문</a>
+          <a href="#">이용약관</a>
+          <a href="#">개인정보처리방침</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <p>© 2026 KDN Charge. All rights reserved. | 사업자등록번호 000-00-00000 | 서울특별시 강남구 테헤란로 123</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    document.querySelectorAll('.nav a').forEach(a => {
+      if (a.href === location.href) a.style.color = '#00c896';
+    });
+  </script>
+</body>
+</html>
