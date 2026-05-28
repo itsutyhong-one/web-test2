@@ -133,6 +133,20 @@
     .msg-bubble p { margin: 0 0 6px; }
     .msg-bubble p:last-child { margin-bottom: 0; }
     .msg-time { font-size: 0.72rem; color: #bbb; padding: 0 4px; }
+    .msg-attach-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.85);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 100px;
+      margin-bottom: 6px;
+      align-self: flex-end;
+    }
     .attach-bar {
       padding: 10px 20px;
       background: #eff6ff;
@@ -465,6 +479,7 @@
     // ============================================================
     let chatHistory   = [];
     let pendingCtx    = null;
+    let pendingLabel  = null;
     let decryptedKey  = null;
 
     const STORAGE_KEY  = 'kdn_ai_enc_key';
@@ -656,7 +671,7 @@
     // ============================================================
     // CHAT UI
     // ============================================================
-    function appendMsg(role, content, typing = false) {
+    function appendMsg(role, content, typing = false, attachLabel = null) {
       const box = document.getElementById('chatMessages');
       const isUser = role === 'user';
       const time = new Date().toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
@@ -677,9 +692,13 @@
         const bubble = isUser
           ? content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')
           : renderMd(content);
+        const attachChip = attachLabel
+          ? `<div class="msg-attach-chip">📎 ${attachLabel.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div>`
+          : '';
         div.innerHTML = `
           <div class="msg-avatar">${isUser ? '👤' : '🤖'}</div>
           <div class="msg-body">
+            ${attachChip}
             <div class="msg-bubble">${bubble}</div>
             <div class="msg-time">${time}</div>
           </div>`;
@@ -701,12 +720,13 @@
       if (!text) return;
 
       let fullContent = text;
+      const attachedLabel = pendingCtx ? pendingLabel : null;
       if (pendingCtx) {
         fullContent = pendingCtx + '\n\n---\n\n' + text;
         clearAttach();
       }
 
-      appendMsg('user', text);
+      appendMsg('user', text, false, attachedLabel);
       chatHistory.push({ role: 'user', content: fullContent });
 
       const input = document.getElementById('chatInput');
@@ -735,13 +755,15 @@
     // ATTACHMENT
     // ============================================================
     function setAttach(ctx, label) {
-      pendingCtx = ctx;
+      pendingCtx   = ctx;
+      pendingLabel = label;
       document.getElementById('attachBar').style.display = 'flex';
       document.getElementById('attachLabel').textContent = label;
     }
 
     function clearAttach() {
-      pendingCtx = null;
+      pendingCtx   = null;
+      pendingLabel = null;
       document.getElementById('attachBar').style.display = 'none';
     }
 
