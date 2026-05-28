@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KDN Charge 운영시스템 — AI 고장진단</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="admin.css"/>
+  <style>
+    .ai-page-content {
+      padding: 24px 32px;
+      height: calc(100vh - 64px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .ai-layout {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 20px;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .settings-col {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+      padding-bottom: 4px;
+    }
+    .chat-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #fff;
+      border-radius: 14px;
+      border: 1.5px solid #d8dce8;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .chat-panel-header {
+      padding: 16px 24px;
+      border-bottom: 1.5px solid #e4e8f0;
+      background: #f7f9fc;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background: #f9fafc;
+    }
+    .chat-message {
+      display: flex;
+      gap: 12px;
+      max-width: 88%;
+    }
+    .chat-message.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+    .chat-message.assistant { align-self: flex-start; }
+    .msg-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .chat-message.assistant .msg-avatar { background: linear-gradient(135deg, #0d1f3c, #00c896); }
+    .chat-message.user .msg-avatar { background: #e8f0ff; }
+    .msg-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .chat-message.user .msg-body { align-items: flex-end; }
+    .msg-bubble {
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 0.9rem;
+      line-height: 1.75;
+      word-break: break-word;
+    }
+    .chat-message.user .msg-bubble {
+      background: #0d1f3c;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .chat-message.assistant .msg-bubble {
+      background: #fff;
+      color: #1a1a2e;
+      border: 1.5px solid #e8eaf0;
+      border-bottom-left-radius: 4px;
+    }
+    .msg-bubble h2, .msg-bubble h3, .msg-bubble h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin: 10px 0 4px;
+    }
+    .msg-bubble h2:first-child, .msg-bubble h3:first-child, .msg-bubble h4:first-child { margin-top: 0; }
+    .msg-bubble ul { margin: 6px 0 6px 18px; }
+    .msg-bubble ol { margin: 6px 0 6px 18px; }
+    .msg-bubble li { margin-bottom: 4px; }
+    .msg-bubble code {
+      background: #f0f3f8;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.83rem;
+      font-family: 'Courier New', monospace;
+    }
+    .msg-bubble pre {
+      background: #1a1a2e;
+      color: #00c896;
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      margin: 8px 0;
+    }
+    .msg-bubble pre code { background: none; padding: 0; color: inherit; }
+    .msg-bubble strong { font-weight: 700; }
+    .msg-bubble p { margin: 0 0 6px; }
+    .msg-bubble p:last-child { margin-bottom: 0; }
+    .msg-time { font-size: 0.72rem; color: #bbb; padding: 0 4px; }
+    .attach-bar {
+      padding: 10px 20px;
+      background: #eff6ff;
+      border-top: 1.5px solid #bfdbfe;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: #1d4ed8;
+      flex-shrink: 0;
+    }
+    .attach-bar .remove-btn {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: #1d4ed8;
+      font-size: 1rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .attach-bar .remove-btn:hover { background: rgba(29,78,216,0.1); }
+    .chat-input-area {
+      padding: 16px 20px;
+      border-top: 1.5px solid #e8eaf0;
+      background: #fff;
+      flex-shrink: 0;
+    }
+    .chat-input-row { display: flex; gap: 10px; align-items: flex-end; }
+    .chat-textarea {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1.5px solid #e8eaf0;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      color: #1a1a2e;
+      resize: none;
+      min-height: 56px;
+      max-height: 120px;
+      overflow-y: auto;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      line-height: 1.5;
+    }
+    .chat-textarea:focus {
+      outline: none;
+      border-color: #00c896;
+      box-shadow: 0 0 0 3px rgba(0,200,150,0.12);
+    }
+    .send-btn {
+      width: 56px;
+      height: 56px;
+      background: #00c896;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.4rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .send-btn:hover:not(:disabled) { background: #00a87a; transform: translateY(-1px); }
+    .send-btn:disabled { background: #d0d4dc; cursor: not-allowed; transform: none; }
+    .input-hint { font-size: 0.72rem; color: #bbb; margin-top: 6px; text-align: right; }
+    .api-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    .api-status.connected { background: #e8faf3; color: #00a87a; }
+    .api-status.disconnected { background: #fff0f0; color: #e74c3c; }
+    .api-status.unknown { background: #f0f2f7; color: #888; }
+    .key-input-wrap { display: flex; gap: 8px; }
+    .key-toggle-btn {
+      padding: 0 12px;
+      background: #f0f2f7;
+      border: 1.5px solid #e8eaf0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .key-toggle-btn:hover { background: #e4e8f0; }
+    .quick-q-btn {
+      text-align: left;
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      border-radius: 8px;
+      border: 1.5px solid #e8eaf0;
+      background: #f9fafc;
+      color: #444;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+      line-height: 1.4;
+    }
+    .quick-q-btn:hover { border-color: #00c896; color: #00a87a; background: rgba(0,200,150,0.05); }
+    .typing-indicator { display: flex; gap: 5px; align-items: center; padding: 4px 2px; }
+    .typing-dot {
+      width: 8px; height: 8px;
+      background: #00c896;
+      border-radius: 50%;
+      animation: typing-bounce 1.4s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typing-bounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-6px); opacity: 1; }
+    }
+    .charger-select-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 16px;
+      border-bottom: 1px solid #f0f2f7;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .charger-select-item:hover { background: #f5f7fb; }
+    .charger-select-item:last-child { border-bottom: none; }
+    .charger-select-list { max-height: 360px; overflow-y: auto; }
+    .model-chip {
+      display: inline-block;
+      background: rgba(0,200,150,0.12);
+      color: #00a87a;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 100px;
+    }
+    @media (max-width: 900px) {
+      .ai-layout { grid-template-columns: 1fr; }
+      .settings-col { flex-direction: row; flex-wrap: wrap; overflow-y: visible; }
+      .settings-col .card { min-width: 260px; flex: 1; }
+    }
+  </style>
+</head>
+<body data-page="ai-chat">
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title">AI 고장진단</span>
+      <div class="topbar-right">
+        <span class="topbar-date" id="topbarDate"></span>
+        <div class="topbar-user">
+          <div class="user-avatar">관</div>
+          <span>관리자</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-page-content">
+      <div class="ai-layout">
+
+        <!-- 좌측: 설정 패널 -->
+        <div class="settings-col">
+
+          <!-- API 설정 카드 -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">⚙️ API 설정</span>
+            </div>
+            <div class="card-body">
+              <div class="api-status unknown" id="apiStatus">
+                <span>●</span><span id="apiStatusText">API 키 미설정</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">OpenAI API Key</label>
+                <div class="key-input-wrap">
+                  <input type="password" id="apiKeyInput" class="form-input"
+                    placeholder="sk-..." autocomplete="off" spellcheck="false"/>
+                  <button class="key-toggle-btn" id="toggleKeyBtn" title="보기/숨기기">👁</button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">모델 선택</label>
+                <select id="modelSelect" class="form-select">
+                  <option value="gpt-4o">GPT-4o (권장)</option>
+                  <option value="gpt-4o-mini">GPT-4o mini (빠름)</option>
+                  <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                  <option value="gpt-3.5-turbo">GPT-3.5 Turbo (경제적)</option>
+                </select>
+              </div>
+
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-primary" id="saveKeyBtn" style="flex:1;">저장</button>
+                <button class="btn btn-secondary" id="testKeyBtn">연결 테스트</button>
+              </div>
+
+              <p style="font-size:0.73rem;color:#aaa;margin-top:10px;line-height:1.6;">
+                🔒 API 키는 AES-256-GCM으로 암호화되어 이 기기 로컬에만 저장됩니다.
+              </p>
+            </div>
+          </div>
+
+          <!-- 데이터 첨부 카드 -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">📊 데이터 첨부</span>
+            </div>
+            <div class="card-body">
+              <p style="font-size:0.82rem;color:#888;margin-bottom:14px;line-height:1.55;">
+                다음 메시지에 충전기 데이터를 포함하여 전송합니다.
+              </p>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <button class="btn btn-outline" id="attachAllBtn">⚡ 전체 충전기 현황</button>
+                <button class="btn btn-outline" id="attachFaultsBtn">🔧 고장 내역</button>
+                <button class="btn btn-outline" id="attachChargerBtn">🔍 특정 충전기 선택...</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 빠른 질문 카드 -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">💡 빠른 질문</span>
+            </div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:7px;">
+                <button class="quick-q-btn" data-q="현재 고장 충전기들의 원인을 분석하고 우선순위별 조치 순서를 알려줘.">🔴 고장 원인 분석 및 조치 순서</button>
+                <button class="quick-q-btn" data-q="통신 오류가 발생했을 때 점검해야 할 항목과 단계별 해결 방법을 알려줘.">📡 통신 오류 점검 방법</button>
+                <button class="quick-q-btn" data-q="커넥터 불량이 발생하는 주요 원인과 현장 점검 절차를 알려줘.">🔌 커넥터 불량 점검 절차</button>
+                <button class="quick-q-btn" data-q="전원부 이상 알람이 발생했을 때 안전하게 진단하는 방법을 알려줘.">⚡ 전원 이상 진단 방법</button>
+                <button class="quick-q-btn" data-q="충전기 정기 예방 점검 체크리스트를 표 형식으로 작성해줘.">📋 예방 점검 체크리스트</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 우측: 채팅 패널 -->
+        <div class="chat-panel">
+
+          <div class="chat-panel-header">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="width:44px;height:44px;background:linear-gradient(135deg,#0d1f3c,#00c896);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">🤖</div>
+              <div>
+                <div style="font-weight:700;font-size:0.95rem;color:#1a1a2e;">AI 고장진단 어시스턴트</div>
+                <div style="font-size:0.75rem;color:#888;margin-top:2px;">
+                  모델: <span class="model-chip" id="currentModelBadge">GPT-4o</span>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-sm btn-secondary" id="clearChatBtn">대화 초기화</button>
+          </div>
+
+          <!-- 메시지 영역 -->
+          <div id="chatMessages" class="chat-messages">
+            <div class="chat-message assistant">
+              <div class="msg-avatar">🤖</div>
+              <div class="msg-body">
+                <div class="msg-bubble">
+                  <p>안녕하세요! <strong>KDN Charge AI 고장진단 어시스턴트</strong>입니다.</p>
+                  <p>충전기의 고장 증상이나 상태 이력을 알려주시면 원인 분석과 조치 방안을 제안해 드립니다.</p>
+                  <ul>
+                    <li>왼쪽 <strong>데이터 첨부</strong> 버튼으로 충전기 현황을 전송하세요</li>
+                    <li>고장 증상을 직접 입력하거나 <strong>빠른 질문</strong>을 선택하세요</li>
+                    <li>먼저 <strong>API 설정</strong>에서 OpenAI 키를 등록해 주세요</li>
+                  </ul>
+                </div>
+                <div class="msg-time" id="welcomeTime"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 첨부 미리보기 바 -->
+          <div class="attach-bar" id="attachBar" style="display:none;">
+            <span>📎</span>
+            <span id="attachLabel" style="font-weight:600;"></span>
+            <span style="color:#93c5fd;font-size:0.78rem;">이 첨부 데이터가 다음 메시지에 포함됩니다</span>
+            <button class="remove-btn" id="removeAttachBtn" title="첨부 제거">✕</button>
+          </div>
+
+          <!-- 입력 영역 -->
+          <div class="chat-input-area">
+            <div class="chat-input-row">
+              <textarea
+                id="chatInput"
+                class="chat-textarea"
+                placeholder="충전기 고장 증상이나 질문을 입력하세요..."
+                rows="2"
+              ></textarea>
+              <button id="sendBtn" class="send-btn" disabled title="전송 (Enter)">↑</button>
+            </div>
+            <div class="input-hint">Enter로 전송 · Shift+Enter로 줄바꿈</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 충전기 선택 모달 -->
+  <div class="modal-overlay" id="chargerModal">
+    <div class="modal" style="max-width:480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🔍 충전기 선택</h3>
+        <button class="modal-close" id="chargerModalClose">×</button>
+      </div>
+      <p style="font-size:0.85rem;color:#888;margin-bottom:14px;">상세 이력을 분석할 충전기를 선택하세요.</p>
+      <input type="text" id="chargerSearchInput" class="form-input"
+        placeholder="충전소명 또는 충전기 ID 검색..." style="margin-bottom:12px;"/>
+      <div class="charger-select-list" id="chargerSelectList"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="env.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="admin.js"></script>
+  <script>
+    // ============================================================
+    // STATE
+    // ============================================================
+    let chatHistory   = [];
+    let pendingCtx    = null;
+    let decryptedKey  = null;
+
+    const STORAGE_KEY  = 'kdn_ai_enc_key';
+    const STORAGE_MDL  = 'kdn_ai_model';
+    const ENCRYPT_SALT = 'kdn-charge-ai-2024-v1';
+
+    // ============================================================
+    // WEB CRYPTO  —  AES-256-GCM + PBKDF2
+    // ============================================================
+    async function getEncKey() {
+      const password = (navigator.userAgent + ENCRYPT_SALT).slice(0, 80);
+      const enc = new TextEncoder();
+      const km = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+      return crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt: enc.encode(ENCRYPT_SALT), iterations: 120000, hash: 'SHA-256' },
+        km,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt', 'decrypt']
+      );
+    }
+
+    async function encryptApiKey(raw) {
+      const key = await getEncKey();
+      const iv  = crypto.getRandomValues(new Uint8Array(12));
+      const ct  = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(raw));
+      const buf = new Uint8Array(12 + ct.byteLength);
+      buf.set(iv);
+      buf.set(new Uint8Array(ct), 12);
+      return btoa(String.fromCharCode(...buf));
+    }
+
+    async function decryptApiKey(stored) {
+      try {
+        const key = await getEncKey();
+        const buf = Uint8Array.from(atob(stored), c => c.charCodeAt(0));
+        const pt  = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: buf.slice(0, 12) }, key, buf.slice(12));
+        return new TextDecoder().decode(pt);
+      } catch { return null; }
+    }
+
+    // ============================================================
+    // OPENAI API CALL
+    // ============================================================
+    const SYSTEM_PROMPT = `당신은 EV 전기차 충전기 전문 고장진단 엔지니어입니다. KDN Charge 운영시스템의 AI 어시스턴트로 활동합니다.
+
+역할:
+1. 고장 원인 분석: 충전기 상태 이력, 오류 유형, 증상을 분석해 정확한 원인을 진단합니다.
+2. 단계별 조치 방안: 현장 기술자가 즉시 적용할 수 있는 구체적인 점검·수리 절차를 제공합니다.
+3. 예방 정비 가이드: 반복 고장 예방을 위한 정기 점검 사항을 안내합니다.
+4. 기술 지원: OCPP, CHAdeMO, CCS1/2, AC Type 2 등 프로토콜 및 충전기 기술 문의에 답변합니다.
+
+응답 형식:
+- 한국어로 명확하고 실용적으로 답변하세요.
+- 고장 진단 시: ① 추정 원인 → ② 확인 방법 → ③ 조치 절차 순으로 구성하세요.
+- 안전 관련 작업 시 반드시 "⚠️ 안전 주의" 항목을 포함하세요.
+- 고압 전기 작업은 자격을 갖춘 전기 기술자가 수행해야 함을 명시하세요.`;
+
+    async function callOpenAI(messages) {
+      if (!decryptedKey) throw new Error('API 키가 설정되지 않았습니다. 왼쪽 API 설정에서 키를 등록해 주세요.');
+      const model = document.getElementById('modelSelect').value;
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${decryptedKey}`,
+        },
+        body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: 2048 }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        if (res.status === 401) throw new Error('API 키가 유효하지 않습니다. 올바른 키를 다시 입력해 주세요.');
+        if (res.status === 429) throw new Error('API 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.');
+        throw new Error(`API 오류 (${res.status}): ${err?.error?.message || '알 수 없는 오류'}`);
+      }
+      const data = await res.json();
+      return data.choices[0].message.content;
+    }
+
+    // ============================================================
+    // CONTEXT BUILDERS
+    // ============================================================
+    function buildAllChargerCtx() {
+      const sm = { available:'충전가능', charging:'충전중', fault:'고장', offline:'오프라인', maintenance:'점검중' };
+      const counts = {};
+      Object.keys(sm).forEach(s => { counts[s] = CHARGERS.filter(c => c.status === s).length; });
+      let ctx = `📊 [전체 충전기 현황 — ${new Date().toLocaleString('ko-KR')}]\n`;
+      ctx += `총 ${CHARGERS.length}대 | ` + Object.entries(counts).map(([s,n]) => `${sm[s]} ${n}대`).join(' | ') + '\n\n';
+      const abnormal = CHARGERS.filter(c => c.status === 'fault' || c.status === 'offline');
+      if (abnormal.length) {
+        ctx += `⚠️ [이상 상태 충전기]\n`;
+        abnormal.forEach(c => {
+          ctx += `• ${c.id} | ${c.stationName} | ${c.port} | ${c.type} | ${sm[c.status]}\n`;
+          ctx += `  마지막 업데이트: ${new Date(c.lastUpdate).toLocaleString('ko-KR')}\n`;
+        });
+        ctx += '\n';
+      }
+      const charging = CHARGERS.filter(c => c.status === 'charging');
+      if (charging.length) {
+        ctx += `🔌 [현재 충전 중]\n`;
+        charging.forEach(c => {
+          ctx += `• ${c.id} | ${c.stationName} | ${c.port} | 충전율 ${c.chargePercent||'?'}% | 차량 ${c.connectedVehicle||'?'}\n`;
+        });
+      }
+      return ctx;
+    }
+
+    function buildFaultCtx() {
+      if (!FAULTS.length) return '📋 [고장 내역]\n현재 접수된 고장 내역이 없습니다.\n';
+      const sv = { high:'긴급', medium:'보통', low:'경미' };
+      let ctx = `🔧 [고장 접수 내역 — ${FAULTS.length}건]\n\n`;
+      FAULTS.forEach((f, i) => {
+        ctx += `[${i+1}] ${f.id} / ${f.stationName} / ${f.chargerId}\n`;
+        ctx += `  유형: ${f.type} | 심각도: ${sv[f.severity]||f.severity} | 상태: ${f.status}\n`;
+        ctx += `  접수: ${f.reportedAt}\n`;
+        if (f.desc) ctx += `  내용: ${f.desc}\n`;
+        if (f.actionTaken) ctx += `  조치: ${f.actionTaken}\n`;
+        ctx += '\n';
+      });
+      return ctx;
+    }
+
+    function buildChargerDetailCtx(id) {
+      const c = CHARGERS.find(x => x.id === id);
+      if (!c) return `충전기 ${id} 정보를 찾을 수 없습니다.`;
+      const sm = { available:'충전가능', charging:'충전중', fault:'고장', offline:'오프라인', maintenance:'점검중' };
+      const sv = { high:'긴급', medium:'보통', low:'경미' };
+      let ctx = `🔍 [충전기 상세 — ${id}]\n`;
+      ctx += `충전소: ${c.stationName} | 포트: ${c.port} | 타입: ${c.type}\n`;
+      ctx += `현재 상태: ${sm[c.status]||c.status}`;
+      if (c.chargePercent != null) ctx += ` (충전율 ${c.chargePercent}%)`;
+      if (c.connectedVehicle) ctx += ` | 연결 차량: ${c.connectedVehicle}`;
+      ctx += `\n마지막 업데이트: ${new Date(c.lastUpdate).toLocaleString('ko-KR')}\n`;
+      const myFaults = FAULTS.filter(f => f.chargerId === id);
+      if (myFaults.length) {
+        ctx += `\n📋 [고장 이력 — ${myFaults.length}건]\n`;
+        myFaults.forEach(f => {
+          ctx += `• [${f.reportedAt}] ${f.type} | ${sv[f.severity]||f.severity} | ${f.status}\n`;
+          if (f.desc) ctx += `  ${f.desc}\n`;
+        });
+      } else {
+        ctx += `\n📋 [고장 이력] 없음\n`;
+      }
+      const myHist = HISTORY.filter(h => h.chargerId === id).slice(0, 20);
+      if (myHist.length) {
+        ctx += `\n🕐 [최근 충전 이력 — ${myHist.length}건]\n`;
+        myHist.forEach(h => {
+          ctx += `• ${new Date(h.startTime).toLocaleString('ko-KR').slice(0,-3)} | ${h.vehicle} | ${h.kwh}kWh | ${h.duration}분 | ${h.memberType}\n`;
+        });
+      }
+      return ctx;
+    }
+
+    // ============================================================
+    // SIMPLE MARKDOWN RENDERER
+    // ============================================================
+    function renderMd(text) {
+      let h = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      // code blocks
+      h = h.replace(/```[\w]*\n?([\s\S]*?)```/g, (_, code) => `<pre><code>${code.trim()}</code></pre>`);
+      // inline code
+      h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+      // bold
+      h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      // italic
+      h = h.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+      // headings
+      h = h.replace(/^### (.+)$/gm, '<h4>$1</h4>');
+      h = h.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+      h = h.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+      // lists (wrap consecutive li)
+      h = h.replace(/^[-•] (.+)$/gm, '<li>$1</li>');
+      h = h.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+      h = h.replace(/(<li>[\s\S]+?<\/li>)(\n(?!<li>)|$)/g, '$1\n');
+      // paragraphs
+      const parts = h.split(/\n\n+/);
+      h = parts.map(p => {
+        p = p.trim();
+        if (!p) return '';
+        if (/^<(h[2-4]|ul|ol|li|pre|blockquote)/.test(p)) return p;
+        const wrapped = p.replace(/\n/g, '<br>');
+        return `<p>${wrapped}</p>`;
+      }).join('');
+      // wrap lists
+      h = h.replace(/(<li>.*?<\/li>\s*)+/gs, m => `<ul>${m}</ul>`);
+      return h;
+    }
+
+    // ============================================================
+    // CHAT UI
+    // ============================================================
+    function appendMsg(role, content, typing = false) {
+      const box = document.getElementById('chatMessages');
+      const isUser = role === 'user';
+      const time = new Date().toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
+      const div = document.createElement('div');
+      div.className = `chat-message ${role}`;
+      if (typing) {
+        div.id = 'typingMsg';
+        div.innerHTML = `
+          <div class="msg-avatar">🤖</div>
+          <div class="msg-body">
+            <div class="msg-bubble">
+              <div class="typing-indicator">
+                <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+              </div>
+            </div>
+          </div>`;
+      } else {
+        const bubble = isUser
+          ? content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')
+          : renderMd(content);
+        div.innerHTML = `
+          <div class="msg-avatar">${isUser ? '👤' : '🤖'}</div>
+          <div class="msg-body">
+            <div class="msg-bubble">${bubble}</div>
+            <div class="msg-time">${time}</div>
+          </div>`;
+      }
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function removeTyping() {
+      const el = document.getElementById('typingMsg');
+      if (el) el.remove();
+    }
+
+    // ============================================================
+    // SEND MESSAGE
+    // ============================================================
+    async function sendMessage(text) {
+      text = text.trim();
+      if (!text) return;
+
+      let fullContent = text;
+      if (pendingCtx) {
+        fullContent = pendingCtx + '\n\n---\n\n' + text;
+        clearAttach();
+      }
+
+      appendMsg('user', text);
+      chatHistory.push({ role: 'user', content: fullContent });
+
+      const input = document.getElementById('chatInput');
+      const btn   = document.getElementById('sendBtn');
+      input.value = '';
+      autoResize(input);
+      btn.disabled = true;
+
+      appendMsg('assistant', '', true);
+
+      try {
+        const reply = await callOpenAI([{ role:'system', content: SYSTEM_PROMPT }, ...chatHistory]);
+        removeTyping();
+        appendMsg('assistant', reply);
+        chatHistory.push({ role: 'assistant', content: reply });
+      } catch (err) {
+        removeTyping();
+        appendMsg('assistant', `❌ **오류가 발생했습니다**\n\n${err.message}`);
+      } finally {
+        btn.disabled = !input.value.trim() || !decryptedKey;
+        input.focus();
+      }
+    }
+
+    // ============================================================
+    // ATTACHMENT
+    // ============================================================
+    function setAttach(ctx, label) {
+      pendingCtx = ctx;
+      document.getElementById('attachBar').style.display = 'flex';
+      document.getElementById('attachLabel').textContent = label;
+    }
+
+    function clearAttach() {
+      pendingCtx = null;
+      document.getElementById('attachBar').style.display = 'none';
+    }
+
+    // ============================================================
+    // CHARGER MODAL
+    // ============================================================
+    function openChargerModal() {
+      renderChargerList('');
+      document.getElementById('chargerModal').classList.add('open');
+      setTimeout(() => document.getElementById('chargerSearchInput').focus(), 50);
+    }
+
+    function renderChargerList(q) {
+      q = q.toLowerCase();
+      const sc = { available:'#00a87a', charging:'#2563eb', fault:'#e74c3c', offline:'#999', maintenance:'#d97706' };
+      const sl = { available:'충전가능', charging:'충전중', fault:'고장', offline:'오프라인', maintenance:'점검중' };
+      const list = CHARGERS.filter(c =>
+        !q || c.id.toLowerCase().includes(q) || c.stationName.toLowerCase().includes(q) || c.port.includes(q)
+      ).slice(0, 60);
+      const el = document.getElementById('chargerSelectList');
+      el.innerHTML = list.length === 0
+        ? '<p style="text-align:center;color:#bbb;padding:24px;font-size:0.85rem;">검색 결과 없음</p>'
+        : list.map(c => `
+          <div class="charger-select-item" data-id="${c.id}">
+            <div style="width:10px;height:10px;border-radius:50%;background:${sc[c.status]||'#999'};flex-shrink:0;"></div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:0.88rem;font-weight:700;">${c.id} · ${c.port}</div>
+              <div style="font-size:0.78rem;color:#888;">${c.stationName} · ${c.type}</div>
+            </div>
+            <span style="font-size:0.75rem;color:${sc[c.status]||'#999'};font-weight:600;flex-shrink:0;">${sl[c.status]||c.status}</span>
+          </div>`).join('');
+      el.querySelectorAll('.charger-select-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const id = item.dataset.id;
+          setAttach(buildChargerDetailCtx(id), `충전기 ${id} 상세 이력`);
+          document.getElementById('chargerModal').classList.remove('open');
+          showToast(`${id} 데이터가 첨부되었습니다.`);
+        });
+      });
+    }
+
+    // ============================================================
+    // HELPERS
+    // ============================================================
+    function updateApiStatus(state) {
+      const el  = document.getElementById('apiStatus');
+      const txt = document.getElementById('apiStatusText');
+      el.className = `api-status ${state}`;
+      const labels = { connected:'API 키 설정됨 ✓', disconnected:'API 키 오류', unknown:'API 키 미설정' };
+      txt.textContent = labels[state] || state;
+    }
+
+    function autoResize(ta) {
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+    }
+
+    function updateSendBtn() {
+      const val = document.getElementById('chatInput').value.trim();
+      document.getElementById('sendBtn').disabled = !val || !decryptedKey;
+    }
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', async () => {
+      await initData();
+
+      document.getElementById('welcomeTime').textContent =
+        new Date().toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
+
+      // Load saved key
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const raw = await decryptApiKey(stored);
+        if (raw) {
+          decryptedKey = raw;
+          document.getElementById('apiKeyInput').value = raw;
+          updateApiStatus('connected');
+        }
+      }
+
+      // Load saved model
+      const savedModel = localStorage.getItem(STORAGE_MDL);
+      if (savedModel) {
+        const sel = document.getElementById('modelSelect');
+        sel.value = savedModel;
+        const label = sel.options[sel.selectedIndex]?.text || savedModel;
+        document.getElementById('currentModelBadge').textContent =
+          label.replace(/ \(.+\)/, '');
+      }
+
+      updateSendBtn();
+
+      // Toggle key visibility
+      document.getElementById('toggleKeyBtn').addEventListener('click', () => {
+        const inp = document.getElementById('apiKeyInput');
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+      });
+
+      // Model change
+      document.getElementById('modelSelect').addEventListener('change', e => {
+        const label = e.target.options[e.target.selectedIndex].text.replace(/ \(.+\)/, '');
+        document.getElementById('currentModelBadge').textContent = label;
+        localStorage.setItem(STORAGE_MDL, e.target.value);
+      });
+
+      // Save key
+      document.getElementById('saveKeyBtn').addEventListener('click', async () => {
+        const raw = document.getElementById('apiKeyInput').value.trim();
+        if (!raw)               { showToast('API 키를 입력해 주세요.', 'error'); return; }
+        if (!raw.startsWith('sk-')) { showToast('올바른 OpenAI API 키 형식이 아닙니다. (sk-로 시작)', 'error'); return; }
+        const enc = await encryptApiKey(raw);
+        localStorage.setItem(STORAGE_KEY, enc);
+        decryptedKey = raw;
+        updateApiStatus('connected');
+        updateSendBtn();
+        showToast('API 키가 암호화되어 저장되었습니다.');
+      });
+
+      // Test connection
+      document.getElementById('testKeyBtn').addEventListener('click', async () => {
+        const raw = document.getElementById('apiKeyInput').value.trim();
+        if (!raw) { showToast('API 키를 먼저 입력해 주세요.', 'error'); return; }
+        const btn = document.getElementById('testKeyBtn');
+        btn.textContent = '테스트 중...';
+        btn.disabled = true;
+        try {
+          const res = await fetch('https://api.openai.com/v1/models', {
+            headers: { 'Authorization': `Bearer ${raw}` }
+          });
+          if (res.ok) {
+            updateApiStatus('connected');
+            showToast('API 키가 유효합니다!');
+          } else {
+            updateApiStatus('disconnected');
+            showToast('API 키가 유효하지 않습니다.', 'error');
+          }
+        } catch {
+          showToast('연결 테스트 중 오류가 발생했습니다.', 'error');
+        } finally {
+          btn.textContent = '연결 테스트';
+          btn.disabled = false;
+        }
+      });
+
+      // Attach buttons
+      document.getElementById('attachAllBtn').addEventListener('click', () => {
+        setAttach(buildAllChargerCtx(), '전체 충전기 현황');
+        showToast('전체 충전기 현황이 첨부되었습니다.');
+      });
+      document.getElementById('attachFaultsBtn').addEventListener('click', () => {
+        setAttach(buildFaultCtx(), '고장 내역');
+        showToast('고장 내역이 첨부되었습니다.');
+      });
+      document.getElementById('attachChargerBtn').addEventListener('click', openChargerModal);
+      document.getElementById('removeAttachBtn').addEventListener('click', clearAttach);
+
+      // Quick questions
+      document.querySelectorAll('.quick-q-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const inp = document.getElementById('chatInput');
+          inp.value = btn.dataset.q;
+          autoResize(inp);
+          updateSendBtn();
+          inp.focus();
+        });
+      });
+
+      // Clear chat
+      document.getElementById('clearChatBtn').addEventListener('click', () => {
+        if (!confirm('대화 내역을 모두 초기화하시겠습니까?')) return;
+        chatHistory = [];
+        clearAttach();
+        const box = document.getElementById('chatMessages');
+        const t = new Date().toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
+        box.innerHTML = `
+          <div class="chat-message assistant">
+            <div class="msg-avatar">🤖</div>
+            <div class="msg-body">
+              <div class="msg-bubble"><p>대화가 초기화되었습니다. 새로운 질문을 입력해 주세요.</p></div>
+              <div class="msg-time">${t}</div>
+            </div>
+          </div>`;
+      });
+
+      // Charger modal
+      document.getElementById('chargerSearchInput').addEventListener('input', e => renderChargerList(e.target.value));
+      document.getElementById('chargerModalClose').addEventListener('click', () => {
+        document.getElementById('chargerModal').classList.remove('open');
+      });
+
+      // Chat input
+      const chatInput = document.getElementById('chatInput');
+      chatInput.addEventListener('input', () => { autoResize(chatInput); updateSendBtn(); });
+      chatInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          if (!document.getElementById('sendBtn').disabled) sendMessage(chatInput.value);
+        }
+      });
+      document.getElementById('sendBtn').addEventListener('click', () => sendMessage(chatInput.value));
+    });
+  </script>
+</body>
+</html>

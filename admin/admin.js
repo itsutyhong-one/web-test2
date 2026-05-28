@@ -162,6 +162,7 @@ function getSidebarHTML(activePage) {
     { page: 'history', icon: '📋', label: '충전 내역', href: 'history.html' },
     { page: 'fault', icon: '🔧', label: '고장 등록', href: 'fault.html', badge: FAULTS.filter(f=>f.status!=='완료').length },
     { page: 'notices', icon: '📢', label: '공지사항 관리', href: 'notices.html' },
+    { page: 'ai-chat', icon: '🤖', label: 'AI 고장진단', href: 'ai-chat.html' },
   ];
   return `
     <div class="sidebar-logo">
@@ -171,13 +172,18 @@ function getSidebarHTML(activePage) {
     </div>
     <nav class="sidebar-nav">
       <div class="nav-section-label">메인 메뉴</div>
-      ${navItems.map(item => `
+      ${navItems.filter(i => i.page !== 'ai-chat').map(item => `
         <a href="${item.href}" class="nav-item${activePage === item.page ? ' active' : ''}" data-page="${item.page}">
           <span class="nav-icon">${item.icon}</span>
           ${item.label}
           ${item.badge ? `<span class="nav-badge">${item.badge}</span>` : ''}
         </a>
       `).join('')}
+      <div class="nav-section-label" style="margin-top:8px;">AI 도구</div>
+      <a href="ai-chat.html" class="nav-item${activePage === 'ai-chat' ? ' active' : ''}" data-page="ai-chat">
+        <span class="nav-icon">🤖</span>
+        AI 고장진단
+      </a>
     </nav>
     <div class="sidebar-footer">
       <a href="../index.html" class="sidebar-back-btn">← 대민 홈페이지로</a>
