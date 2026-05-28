@@ -7,6 +7,67 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="admin.css"/>
+  <style>
+    /* ─── 대시보드 편집 모드 ────────────────────── */
+    .dash-section { margin-bottom: 16px; border-radius: 14px; }
+    .dash-section > .card,
+    .dash-section > div > .card { margin-bottom: 0 !important; }
+
+    .dash-handle {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: linear-gradient(to right, #eff6ff, #dbeafe);
+      border: 1.5px dashed #93c5fd;
+      border-bottom: none;
+      border-radius: 12px 12px 0 0;
+      cursor: grab;
+      user-select: none;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #2563eb;
+    }
+    .dash-handle:active { cursor: grabbing; }
+    .dash-grip { color: #93c5fd; font-size: 1.05rem; letter-spacing: 2px; line-height: 1; }
+    .dash-hint { margin-left: auto; font-size: 0.72rem; color: #93c5fd; font-weight: 400; }
+
+    .dash-section.edit-mode {
+      outline: 1.5px dashed #bfdbfe;
+      outline-offset: 2px;
+    }
+    .dash-section.edit-mode .dash-handle { display: flex; }
+    .dash-section.edit-mode .dash-handle ~ * { pointer-events: none; }
+
+    .dash-section.is-dragging { opacity: 0.3; }
+
+    .drop-ph {
+      background: rgba(37, 99, 235, 0.05);
+      border: 2px dashed #93c5fd;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      pointer-events: none;
+      box-sizing: border-box;
+    }
+
+    /* 편집 버튼 */
+    #editDashBtn {
+      font-size: 0.8rem;
+      padding: 5px 14px;
+      border-radius: 8px;
+      border: 1.5px solid #d1d5db;
+      background: #fff;
+      color: #555;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.18s;
+      font-family: inherit;
+    }
+    #editDashBtn:hover { border-color: #2563eb; color: #2563eb; }
+    #editDashBtn.active { background: #2563eb; border-color: #2563eb; color: #fff; }
+  </style>
 </head>
 <body data-page="dashboard">
   <aside class="sidebar" id="sidebar"></aside>
@@ -16,6 +77,7 @@
       <span class="topbar-title">대시보드</span>
       <div class="topbar-right">
         <span class="topbar-date" id="topbarDate"></span>
+        <button id="editDashBtn" onclick="toggleEdit()">✏ 편집</button>
         <div class="topbar-user">
           <div class="user-avatar">관</div>
           <span>관리자</span>
@@ -23,75 +85,88 @@
       </div>
     </div>
 
-    <div class="page-content">
+    <div class="page-content" id="dashboardContent">
 
       <!-- 통계 카드 -->
-      <div class="stat-grid" id="statGrid"></div>
+      <div class="dash-section" data-id="stat">
+        <div class="dash-handle">
+          <span class="dash-grip">⠿⠿</span>통계 카드<span class="dash-hint">드래그하여 이동</span>
+        </div>
+        <div class="stat-grid" id="statGrid"></div>
+      </div>
 
-      <!-- 2열 레이아웃 -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <!-- 충전기 현황 & 고장 접수 -->
+      <div class="dash-section" data-id="overview">
+        <div class="dash-handle">
+          <span class="dash-grip">⠿⠿</span>충전기 현황 &amp; 고장 접수<span class="dash-hint">드래그하여 이동</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
 
-        <!-- 충전기 상태 요약 -->
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">충전기 상태 요약</span>
-            <a href="realtime.html" class="btn btn-sm btn-secondary">전체보기</a>
-          </div>
-          <div class="card-body" style="display:flex;gap:24px;align-items:center;">
-            <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px;">
-              <canvas id="statusDonut" width="150" height="150"></canvas>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">충전기 상태 요약</span>
+              <a href="realtime.html" class="btn btn-sm btn-secondary">전체보기</a>
             </div>
-            <div id="statusSummary" style="flex:1;"></div>
+            <div class="card-body" style="display:flex;gap:24px;align-items:center;">
+              <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px;">
+                <canvas id="statusDonut" width="150" height="150"></canvas>
+              </div>
+              <div id="statusSummary" style="flex:1;"></div>
+            </div>
           </div>
-        </div>
 
-        <!-- 최근 고장 접수 -->
-        <div class="card">
-          <div class="card-header">
-            <span class="card-title">최근 고장 접수</span>
-            <a href="fault.html" class="btn btn-sm btn-secondary">전체보기</a>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">최근 고장 접수</span>
+              <a href="fault.html" class="btn btn-sm btn-secondary">전체보기</a>
+            </div>
+            <div class="card-body" id="recentFaults" style="padding:0;"></div>
           </div>
-          <div class="card-body" id="recentFaults" style="padding:0;"></div>
-        </div>
 
+        </div>
       </div>
 
       <!-- 주간 매출 현황 -->
-      <div class="card" style="margin-bottom:16px;">
-        <div class="card-header">
-          <span class="card-title">주간 매출 현황</span>
-          <span id="weeklyChangeBadge" style="font-size:0.82rem;font-weight:700;padding:4px 14px;border-radius:100px;"></span>
-          <a href="history.html" class="btn btn-sm btn-secondary" style="margin-left:8px;">전체보기</a>
+      <div class="dash-section" data-id="weekly">
+        <div class="dash-handle">
+          <span class="dash-grip">⠿⠿</span>주간 매출 현황<span class="dash-hint">드래그하여 이동</span>
         </div>
-        <div class="card-body" style="display:flex;gap:32px;align-items:flex-start;">
-          <div id="weeklyStats" style="flex-shrink:0;min-width:155px;"></div>
-          <div style="flex:1;min-width:0;position:relative;">
-            <canvas id="weeklyChart" height="160" style="display:block;width:100%;"></canvas>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">주간 매출 현황</span>
+            <span id="weeklyChangeBadge" style="font-size:0.82rem;font-weight:700;padding:4px 14px;border-radius:100px;"></span>
+            <a href="history.html" class="btn btn-sm btn-secondary" style="margin-left:8px;">전체보기</a>
+          </div>
+          <div class="card-body" style="display:flex;gap:32px;align-items:flex-start;">
+            <div id="weeklyStats" style="flex-shrink:0;min-width:155px;"></div>
+            <div style="flex:1;min-width:0;position:relative;">
+              <canvas id="weeklyChart" height="160" style="display:block;width:100%;"></canvas>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 오늘 충전 내역 -->
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">최근 충전 내역 (최신 10건)</span>
-          <a href="history.html" class="btn btn-sm btn-secondary">전체보기</a>
+      <!-- 최근 충전 내역 -->
+      <div class="dash-section" data-id="history">
+        <div class="dash-handle">
+          <span class="dash-grip">⠿⠿</span>최근 충전 내역<span class="dash-hint">드래그하여 이동</span>
         </div>
-        <div class="table-wrap">
-          <table id="recentHistoryTable">
-            <thead>
-              <tr>
-                <th>충전소</th>
-                <th>충전기 ID</th>
-                <th>차량번호</th>
-                <th>시작 시각</th>
-                <th>충전량(kWh)</th>
-                <th>결제 금액</th>
-                <th>회원유형</th>
-              </tr>
-            </thead>
-            <tbody id="recentHistoryBody"></tbody>
-          </table>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">최근 충전 내역 (최신 10건)</span>
+            <a href="history.html" class="btn btn-sm btn-secondary">전체보기</a>
+          </div>
+          <div class="table-wrap">
+            <table id="recentHistoryTable">
+              <thead>
+                <tr>
+                  <th>충전소</th><th>충전기 ID</th><th>차량번호</th>
+                  <th>시작 시각</th><th>충전량(kWh)</th><th>결제 금액</th><th>회원유형</th>
+                </tr>
+              </thead>
+              <tbody id="recentHistoryBody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -103,13 +178,97 @@
   <script src="supabase-client.js"></script>
   <script src="admin.js"></script>
   <script>
+    // ── 대시보드 편집 모드 & 드래그&드롭 ──────────────
+    let editActive = false, dragSrc = null, dropPh = null;
+
+    function toggleEdit() {
+      editActive = !editActive;
+      const btn = document.getElementById('editDashBtn');
+      document.querySelectorAll('#dashboardContent > .dash-section').forEach(s => {
+        s.classList.toggle('edit-mode', editActive);
+        if (editActive) s.setAttribute('draggable', 'true');
+        else s.removeAttribute('draggable');
+      });
+      btn.textContent = editActive ? '✓ 완료' : '✏ 편집';
+      btn.classList.toggle('active', editActive);
+      if (!editActive) {
+        if (dropPh && dropPh.parentNode) dropPh.remove();
+        saveOrder();
+      }
+    }
+
+    function saveOrder() {
+      const ids = [...document.querySelectorAll('#dashboardContent > .dash-section')].map(s => s.dataset.id);
+      localStorage.setItem('kdn_dash_order', JSON.stringify(ids));
+    }
+
+    function applyOrder() {
+      const saved = JSON.parse(localStorage.getItem('kdn_dash_order') || 'null');
+      if (!saved) return;
+      const container = document.getElementById('dashboardContent');
+      saved.forEach(id => {
+        const el = container.querySelector(`.dash-section[data-id="${id}"]`);
+        if (el) container.appendChild(el);
+      });
+    }
+
+    function initDnD() {
+      const container = document.getElementById('dashboardContent');
+
+      container.addEventListener('dragstart', e => {
+        const sec = e.target.closest('.dash-section');
+        if (!sec || !editActive) { e.preventDefault(); return; }
+        dragSrc = sec;
+        dropPh = document.createElement('div');
+        dropPh.className = 'drop-ph';
+        dropPh.style.height = sec.getBoundingClientRect().height + 'px';
+        e.dataTransfer.effectAllowed = 'move';
+        setTimeout(() => sec.classList.add('is-dragging'), 0);
+      });
+
+      container.addEventListener('dragend', () => {
+        if (dragSrc) dragSrc.classList.remove('is-dragging');
+        if (dropPh && dropPh.parentNode) dropPh.remove();
+        dragSrc = null; dropPh = null;
+      });
+
+      container.addEventListener('dragover', e => {
+        e.preventDefault();
+        if (!dragSrc || !dropPh) return;
+        const sec = e.target.closest('#dashboardContent > .dash-section');
+        if (!sec || sec === dragSrc || sec === dropPh) return;
+        if (dropPh.parentNode) dropPh.remove();
+        const mid = sec.getBoundingClientRect().top + sec.offsetHeight / 2;
+        if (e.clientY < mid) sec.before(dropPh);
+        else sec.after(dropPh);
+      });
+
+      container.addEventListener('drop', e => {
+        e.preventDefault();
+        if (!dragSrc) return;
+        if (dropPh && dropPh.parentNode) dropPh.replaceWith(dragSrc);
+        else {
+          const sec = e.target.closest('#dashboardContent > .dash-section');
+          if (sec && sec !== dragSrc) {
+            const mid = sec.getBoundingClientRect().top + sec.offsetHeight / 2;
+            if (e.clientY < mid) sec.before(dragSrc);
+            else sec.after(dragSrc);
+          }
+        }
+      });
+    }
+
+    applyOrder();
+    initDnD();
+
+    // ── 데이터 초기화 및 렌더링 ──────────────────────
     document.addEventListener('DOMContentLoaded', async () => {
       await initData();
-      // 통계 카드
+
       const totalChargers = CHARGERS.length;
       const availableCount = CHARGERS.filter(c => c.status === 'available').length;
-      const chargingCount = CHARGERS.filter(c => c.status === 'charging').length;
-      const faultCount = CHARGERS.filter(c => c.status === 'fault').length;
+      const chargingCount  = CHARGERS.filter(c => c.status === 'charging').length;
+      const faultCount     = CHARGERS.filter(c => c.status === 'fault').length;
 
       document.getElementById('statGrid').innerHTML = `
         <div class="stat-card">
@@ -142,15 +301,15 @@
         </div>
       `;
 
-      // 상태 요약 도넛
+      // ── 도넛 차트 ──────────────────────────────────
       const statusData = [
         { label: '충전 가능', count: availableCount, cls: 'badge-available', color: '#00c896' },
-        { label: '충전 중', count: chargingCount, cls: 'badge-charging', color: '#2563eb' },
-        { label: '고장', count: faultCount, cls: 'badge-fault', color: '#e74c3c' },
-        { label: '오프라인', count: CHARGERS.filter(c=>c.status==='offline').length, cls: 'badge-offline', color: '#999' },
-        { label: '점검 중', count: CHARGERS.filter(c=>c.status==='maintenance').length, cls: 'badge-maintenance', color: '#d97706' },
+        { label: '충전 중',   count: chargingCount,  cls: 'badge-charging',  color: '#2563eb' },
+        { label: '고장',      count: faultCount,     cls: 'badge-fault',     color: '#e74c3c' },
+        { label: '오프라인',  count: CHARGERS.filter(c=>c.status==='offline').length,     cls: 'badge-offline',     color: '#999' },
+        { label: '점검 중',   count: CHARGERS.filter(c=>c.status==='maintenance').length, cls: 'badge-maintenance', color: '#d97706' },
       ];
-      // 도넛 차트 — 인터랙티브 애니메이션
+
       const canvas = document.getElementById('statusDonut');
       const ctx = canvas.getContext('2d');
       const dpr = window.devicePixelRatio || 1;
@@ -160,7 +319,6 @@
       ctx.scale(dpr, dpr);
       const cx = SIZE / 2, cy = SIZE / 2, outerR = 66, innerR = 40;
 
-      // 세그먼트 사전 계산 (0→2π, 상단 기준)
       const segments = [];
       let cumAngle = 0;
       statusData.forEach(s => {
@@ -176,39 +334,26 @@
 
       function drawDonut() {
         ctx.clearRect(0, 0, SIZE, SIZE);
-
-        // 세그먼트
         segments.forEach((s, i) => {
           const r = outerR + expand[i];
           const gap = 0.018;
           const rs = s.start - Math.PI / 2 + gap;
           const re = s.end   - Math.PI / 2 - gap;
           if (re <= rs) return;
-
           ctx.beginPath();
           ctx.moveTo(cx, cy);
           ctx.arc(cx, cy, r, rs, re);
           ctx.closePath();
-
-          // 호버 시 밝은 glow
-          if (i === hoveredSeg) {
-            ctx.shadowColor = s.color;
-            ctx.shadowBlur = 10;
-          }
+          if (i === hoveredSeg) { ctx.shadowColor = s.color; ctx.shadowBlur = 10; }
           ctx.fillStyle = s.color;
           ctx.fill();
           ctx.shadowBlur = 0;
         });
-
-        // 도넛 구멍
         ctx.beginPath();
         ctx.arc(cx, cy, innerR, 0, 2 * Math.PI);
         ctx.fillStyle = '#ffffff';
         ctx.fill();
-
-        // 중앙 텍스트
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         if (hoveredSeg !== null && segments[hoveredSeg]) {
           const s = segments[hoveredSeg];
           ctx.fillStyle = s.color;
@@ -236,26 +381,19 @@
           else expand[i] = target;
         });
         drawDonut();
-        if (dirty) rafId = requestAnimationFrame(animLoop);
-        else rafId = null;
+        if (dirty) rafId = requestAnimationFrame(animLoop); else rafId = null;
       }
 
-      function triggerAnim() {
-        if (!rafId) rafId = requestAnimationFrame(animLoop);
-      }
+      function triggerAnim() { if (!rafId) rafId = requestAnimationFrame(animLoop); }
 
       canvas.addEventListener('mousemove', e => {
         const rect = canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left - cx;
-        const my = e.clientY - rect.top - cy;
-        const dist = Math.sqrt(mx * mx + my * my);
-
+        const mx = e.clientX - rect.left - cx, my = e.clientY - rect.top - cy;
+        const dist = Math.sqrt(mx*mx + my*my);
         if (dist < innerR || dist > outerR + 14) {
           if (hoveredSeg !== null) { hoveredSeg = null; triggerAnim(); }
-          canvas.style.cursor = 'default';
-          return;
+          canvas.style.cursor = 'default'; return;
         }
-
         let a = Math.atan2(my, mx) + Math.PI / 2;
         if (a < 0) a += 2 * Math.PI;
         const idx = segments.findIndex(s => a >= s.start && a < s.end);
@@ -263,15 +401,9 @@
         if (next !== hoveredSeg) { hoveredSeg = next; triggerAnim(); }
         canvas.style.cursor = next !== null ? 'pointer' : 'default';
       });
-
-      canvas.addEventListener('mouseleave', () => {
-        hoveredSeg = null;
-        triggerAnim();
-      });
-
+      canvas.addEventListener('mouseleave', () => { hoveredSeg = null; triggerAnim(); });
       drawDonut();
 
-      // 상태 바 목록
       document.getElementById('statusSummary').innerHTML = statusData.map(s => `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0f0f0;">
           <div style="display:flex;align-items:center;gap:7px;min-width:72px;">
@@ -285,7 +417,7 @@
         </div>
       `).join('');
 
-      // 최근 고장
+      // ── 최근 고장 ──────────────────────────────────
       document.getElementById('recentFaults').innerHTML = FAULTS.slice(0,3).map(f => `
         <div style="padding:14px 20px;border-bottom:1px solid #f0f2f7;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
@@ -297,11 +429,9 @@
         </div>
       `).join('') + `<div style="text-align:center;padding:12px;"><a href="fault.html" style="font-size:0.82rem;color:#00a87a;">전체 고장 내역 보기 →</a></div>`;
 
-      // ── 주간 매출 계산 ──────────────────────────────
+      // ── 주간 매출 ──────────────────────────────────
       const todayMidnight = new Date();
       todayMidnight.setHours(0, 0, 0, 0);
-
-      // 이번 주: 오늘 포함 최근 7일 / 지난 주: 그 전 7일
       const thisWeekStart = new Date(todayMidnight);
       thisWeekStart.setDate(todayMidnight.getDate() - 6);
       const lastWeekStart = new Date(thisWeekStart);
@@ -309,7 +439,6 @@
 
       let thisWeekTotal = 0, lastWeekTotal = 0;
       const dailyRevMap = {};
-
       HISTORY.forEach(h => {
         const t = new Date(h.startTime);
         const dayKey = `${t.getFullYear()}-${t.getMonth()}-${t.getDate()}`;
@@ -321,26 +450,16 @@
         }
       });
 
-      // 7일치 배열
       const weekDays = [];
       const DOW = ['일','월','화','수','목','금','토'];
       for (let i = 6; i >= 0; i--) {
         const d = new Date(todayMidnight);
         d.setDate(todayMidnight.getDate() - i);
         const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-        weekDays.push({
-          date: `${d.getMonth()+1}/${d.getDate()}`,
-          dow: DOW[d.getDay()],
-          value: dailyRevMap[key] || 0,
-          isToday: i === 0,
-        });
+        weekDays.push({ date: `${d.getMonth()+1}/${d.getDate()}`, dow: DOW[d.getDay()], value: dailyRevMap[key] || 0, isToday: i === 0 });
       }
 
-      const pctChange = lastWeekTotal > 0
-        ? Math.round((thisWeekTotal - lastWeekTotal) / lastWeekTotal * 100)
-        : null;
-
-      // 배지
+      const pctChange = lastWeekTotal > 0 ? Math.round((thisWeekTotal - lastWeekTotal) / lastWeekTotal * 100) : null;
       const wcBadge = document.getElementById('weeklyChangeBadge');
       if (pctChange !== null) {
         const up = pctChange >= 0;
@@ -349,11 +468,9 @@
         wcBadge.style.color = up ? '#00a87a' : '#e74c3c';
       } else {
         wcBadge.textContent = '지난 주 데이터 없음';
-        wcBadge.style.background = '#f0f2f7';
-        wcBadge.style.color = '#aaa';
+        wcBadge.style.background = '#f0f2f7'; wcBadge.style.color = '#aaa';
       }
 
-      // 요약 수치
       document.getElementById('weeklyStats').innerHTML = `
         <div style="margin-bottom:20px;">
           <div style="font-size:0.75rem;color:#aaa;margin-bottom:5px;letter-spacing:0.02em;">이번 주 (최근 7일)</div>
@@ -365,12 +482,10 @@
         </div>
       `;
 
-      // ── 바 차트 ─────────────────────────────────────
       const wc = document.getElementById('weeklyChart');
       const wcCtx = wc.getContext('2d');
       const wcDpr = window.devicePixelRatio || 1;
-      const W = wc.parentElement.offsetWidth || 480;
-      const H = 160;
+      const W = wc.parentElement.offsetWidth || 480, H = 160;
       wc.width = W * wcDpr; wc.height = H * wcDpr;
       wc.style.width = W + 'px'; wc.style.height = H + 'px';
       wcCtx.scale(wcDpr, wcDpr);
@@ -380,57 +495,37 @@
       const slotW = W / weekDays.length;
       const barW = Math.min(slotW * 0.5, 48);
 
-      // 가이드라인 3줄
-      wcCtx.strokeStyle = '#f0f2f7';
-      wcCtx.lineWidth = 1;
+      wcCtx.strokeStyle = '#f0f2f7'; wcCtx.lineWidth = 1;
       [0.33, 0.66, 1].forEach(r => {
         const gy = chartB - r * (chartB - chartT);
         wcCtx.beginPath(); wcCtx.moveTo(0, gy); wcCtx.lineTo(W, gy); wcCtx.stroke();
         const label = Math.round(maxRev * r / 10000) + '만';
-        wcCtx.fillStyle = '#ccc';
-        wcCtx.font = `9px 'Noto Sans KR',sans-serif`;
-        wcCtx.textAlign = 'right';
-        wcCtx.fillText(label, W - 2, gy - 3);
+        wcCtx.fillStyle = '#ccc'; wcCtx.font = `9px 'Noto Sans KR',sans-serif`;
+        wcCtx.textAlign = 'right'; wcCtx.fillText(label, W - 2, gy - 3);
       });
 
       weekDays.forEach((d, i) => {
-        const cx2 = slotW * i + slotW / 2;
-        const bx = cx2 - barW / 2;
+        const cx2 = slotW * i + slotW / 2, bx = cx2 - barW / 2;
         const barH = d.value > 0 ? Math.max(4, (d.value / maxRev) * (chartB - chartT)) : 0;
         const by = chartB - barH;
-
-        // 바 그라디언트
         const grad = wcCtx.createLinearGradient(bx, by, bx, chartB);
-        if (d.isToday) {
-          grad.addColorStop(0, '#2563eb');
-          grad.addColorStop(1, '#93c5fd');
-        } else {
-          grad.addColorStop(0, '#c7d2fe');
-          grad.addColorStop(1, '#e0e7ff');
-        }
+        if (d.isToday) { grad.addColorStop(0, '#2563eb'); grad.addColorStop(1, '#93c5fd'); }
+        else { grad.addColorStop(0, '#c7d2fe'); grad.addColorStop(1, '#e0e7ff'); }
         wcCtx.fillStyle = grad;
         wcCtx.beginPath();
         wcCtx.moveTo(bx + 3, by);
         wcCtx.arcTo(bx + barW, by, bx + barW, chartB, 3);
-        wcCtx.lineTo(bx + barW, chartB);
-        wcCtx.lineTo(bx, chartB);
-        wcCtx.lineTo(bx, by + 3);
-        wcCtx.arcTo(bx, by, bx + barW, by, 3);
+        wcCtx.lineTo(bx + barW, chartB); wcCtx.lineTo(bx, chartB);
+        wcCtx.lineTo(bx, by + 3); wcCtx.arcTo(bx, by, bx + barW, by, 3);
         wcCtx.fill();
-
-        // 금액 레이블
         if (d.value > 0) {
           wcCtx.fillStyle = d.isToday ? '#2563eb' : '#94a3b8';
           wcCtx.font = `${d.isToday ? 'bold ' : ''}10px 'Noto Sans KR',sans-serif`;
-          wcCtx.textAlign = 'center';
-          wcCtx.textBaseline = 'bottom';
+          wcCtx.textAlign = 'center'; wcCtx.textBaseline = 'bottom';
           const vLabel = d.value >= 10000 ? (d.value/10000).toFixed(1).replace(/\.0$/,'') + '만' : d.value.toLocaleString();
           wcCtx.fillText(vLabel, cx2, by - 3);
         }
-
-        // 날짜/요일 레이블
-        wcCtx.textBaseline = 'top';
-        wcCtx.textAlign = 'center';
+        wcCtx.textBaseline = 'top'; wcCtx.textAlign = 'center';
         wcCtx.fillStyle = d.isToday ? '#2563eb' : '#94a3b8';
         wcCtx.font = `${d.isToday ? 'bold ' : ''}10px 'Noto Sans KR',sans-serif`;
         wcCtx.fillText(d.date, cx2, chartB + 6);
@@ -439,14 +534,11 @@
         wcCtx.fillText(d.dow, cx2, chartB + 20);
       });
 
-      // 베이스라인
-      wcCtx.strokeStyle = '#e2e8f0';
-      wcCtx.lineWidth = 1.5;
+      wcCtx.strokeStyle = '#e2e8f0'; wcCtx.lineWidth = 1.5;
       wcCtx.beginPath(); wcCtx.moveTo(0, chartB); wcCtx.lineTo(W, chartB); wcCtx.stroke();
 
-      // 최근 충전 내역
-      const tbody = document.getElementById('recentHistoryBody');
-      tbody.innerHTML = HISTORY.slice(0, 10).map(h => `
+      // ── 최근 충전 내역 ────────────────────────────
+      document.getElementById('recentHistoryBody').innerHTML = HISTORY.slice(0, 10).map(h => `
         <tr>
           <td>${h.stationName}</td>
           <td style="font-family:monospace;font-size:0.8rem;">${h.chargerId}</td>
