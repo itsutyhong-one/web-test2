@@ -128,7 +128,8 @@
       </div>
       <div id="faultDetailContent"></div>
       <div class="modal-footer" id="faultDetailFooter">
-        <button class="btn btn-secondary" onclick="document.getElementById('faultDetailModal').classList.remove('open')">닫기</button>
+        <button class="btn btn-danger" id="faultDeleteBtn">삭제</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('faultDetailModal').classList.remove('open')" style="margin-left:auto;">닫기</button>
         <button class="btn btn-primary" id="faultStatusBtn">처리중으로 변경</button>
         <button class="btn btn-outline" id="faultDoneBtn">완료 처리</button>
       </div>
@@ -220,6 +221,23 @@
           showToast('완료 처리 — 충전기가 충전가능 상태로 변경되었습니다.');
         } catch (err) {
           showToast('완료 처리 오류: ' + (err.message || '알 수 없는 오류'), 'error');
+        }
+      };
+      document.getElementById('faultDeleteBtn').onclick = async () => {
+        if (!confirm(`[${f.id}] 고장 내역을 삭제하시겠습니까?\n미완료 상태인 경우 충전기가 충전가능으로 복구됩니다.`)) return;
+        try {
+          // 미완료 고장 삭제 시 충전기 상태 복구
+          if (f.status !== '완료') {
+            await updateChargerStatus(f.chargerId, 'available');
+          }
+          await deleteFault(f.id);
+          const idx = localFaults.findIndex(x => x.id === f.id);
+          if (idx !== -1) localFaults.splice(idx, 1);
+          document.getElementById('faultDetailModal').classList.remove('open');
+          renderFaultList();
+          showToast('고장 내역이 삭제되었습니다.');
+        } catch (err) {
+          showToast('삭제 오류: ' + (err.message || '알 수 없는 오류'), 'error');
         }
       };
       document.getElementById('faultDetailModal').classList.add('open');

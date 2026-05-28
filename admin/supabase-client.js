@@ -143,6 +143,14 @@ async function insertFault(fault) {
   return data;
 }
 
+async function deleteFault(id) {
+  const idx = FAULTS.findIndex(x => x.id === id);
+  if (idx !== -1) FAULTS.splice(idx, 1);
+  if (!db) return;
+  const { error } = await db.from('faults').delete().eq('id', id);
+  if (error) throw error;
+}
+
 async function updateFaultStatus(id, status) {
   const f = FAULTS.find(x => x.id === id);
   if (f) f.status = status;
