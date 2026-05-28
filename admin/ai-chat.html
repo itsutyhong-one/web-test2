@@ -137,15 +137,19 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      background: rgba(255,255,255,0.15);
-      border: 1px solid rgba(255,255,255,0.3);
-      color: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.35);
+      color: #fff;
       font-size: 0.75rem;
       font-weight: 600;
       padding: 3px 10px;
       border-radius: 100px;
-      margin-bottom: 6px;
-      align-self: flex-end;
+      margin-bottom: 8px;
+    }
+    .msg-attach-divider {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.15);
+      margin: 0 0 10px;
     }
     .attach-bar {
       padding: 10px 20px;
@@ -698,8 +702,7 @@
         div.innerHTML = `
           <div class="msg-avatar">${isUser ? '👤' : '🤖'}</div>
           <div class="msg-body">
-            ${attachChip}
-            <div class="msg-bubble">${bubble}</div>
+            <div class="msg-bubble">${attachChip ? attachChip + '<div class="msg-attach-divider"></div>' : ''}${bubble}</div>
             <div class="msg-time">${time}</div>
           </div>`;
       }
