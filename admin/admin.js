@@ -160,7 +160,7 @@ function getSidebarHTML(activePage) {
     { page: 'stations', icon: '📍', label: '충전소 관리', href: 'stations.html' },
     { page: 'realtime', icon: '⚡', label: '실시간 현황', href: 'realtime.html', badge: null },
     { page: 'history', icon: '📋', label: '충전 내역', href: 'history.html' },
-    { page: 'fault', icon: '🔧', label: '고장 등록', href: 'fault.html', badge: FAULTS.filter(f=>f.status!=='완료').length },
+    { page: 'fault', icon: '🔧', label: '고장 등록', href: 'fault.html', badge: FAULTS.filter(f=>f.status==='접수').length },
     { page: 'notices', icon: '📢', label: '공지사항 관리', href: 'notices.html' },
     { page: 'ai-chat', icon: '🤖', label: 'AI 고장진단', href: 'ai-chat.html' },
   ];

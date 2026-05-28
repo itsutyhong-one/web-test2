@@ -142,27 +142,42 @@
   <script>
     let localFaults = [];
 
+    const STATUS_ORDER = { '접수': 0, '처리중': 1, '완료': 2 };
+
     function renderFaultList() {
       const statusFilter = document.getElementById('filterFaultStatus').value;
-      const items = statusFilter ? localFaults.filter(f => f.status === statusFilter) : localFaults;
+      let items = statusFilter ? localFaults.filter(f => f.status === statusFilter) : [...localFaults];
+
+      // 접수 → 처리중 → 완료 순 정렬
+      items.sort((a, b) => (STATUS_ORDER[a.status] ?? 3) - (STATUS_ORDER[b.status] ?? 3));
+
       document.getElementById('faultCount').textContent = items.length;
 
       document.getElementById('faultListContent').innerHTML = items.length === 0
         ? '<div style="text-align:center;padding:40px;color:#aaa;">등록된 고장 내역이 없습니다.</div>'
-        : items.map(f => `
-          <div style="padding:16px 20px;border-bottom:1px solid #f0f2f7;cursor:pointer;" onclick="showFaultDetail('${f.id}')">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-              <span class="badge ${f.severity==='high'?'badge-fault':f.severity==='medium'?'badge-maintenance':'badge-offline'}">
-                ${f.severity==='high'?'긴급':f.severity==='medium'?'보통':'경미'}
-              </span>
-              <strong style="font-size:0.9rem;">${f.stationName}</strong>
-              <span class="fault-status-badge status-${f.status}">${f.status}</span>
-              <span style="margin-left:auto;font-size:0.75rem;color:#aaa;">${f.reportedAt}</span>
-            </div>
-            <div style="font-size:0.82rem;color:#555;">${f.chargerId} · ${f.type}</div>
-            <div style="font-size:0.8rem;color:#888;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.desc}</div>
-          </div>
-        `).join('');
+        : items.map(f => {
+            const isNew  = f.status === '접수';
+            const isDone = f.status === '완료';
+            const leftBorder = isNew  ? 'border-left:4px solid #f59e0b;'
+                             : isDone ? 'border-left:4px solid #d1d5db;'
+                             :          'border-left:4px solid #2563eb;';
+            const rowBg = isNew ? 'background:#fffbf0;' : isDone ? 'background:#fafafa;' : '';
+            return `
+              <div style="padding:14px 20px;border-bottom:1px solid #f0f2f7;cursor:pointer;${rowBg}${leftBorder}"
+                   onclick="showFaultDetail('${f.id}')">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+                  <span class="fault-status-badge status-${f.status}">${f.status}</span>
+                  <span class="badge ${f.severity==='high'?'badge-fault':f.severity==='medium'?'badge-maintenance':'badge-offline'}">
+                    ${f.severity==='high'?'긴급':f.severity==='medium'?'보통':'경미'}
+                  </span>
+                  <strong style="font-size:0.9rem;${isDone?'color:#aaa;':''}">${f.stationName}</strong>
+                  <span style="font-size:0.78rem;color:#888;">${f.chargerId}</span>
+                  <span style="margin-left:auto;font-size:0.75rem;color:#bbb;">${f.reportedAt}</span>
+                </div>
+                <div style="font-size:0.82rem;color:${isDone?'#bbb':'#555'};margin-bottom:3px;">${f.type}</div>
+                <div style="font-size:0.8rem;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.desc || ''}</div>
+              </div>`;
+          }).join('');
     }
 
     function showFaultDetail(id) {

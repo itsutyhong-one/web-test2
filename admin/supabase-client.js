@@ -33,6 +33,12 @@ async function getStations({ region, status, search } = {}) {
 async function getChargers({ stationId, status } = {}) {
   if (!db) {
     let list = [...CHARGERS];
+    // mock 환경에서 페이지 간 상태 변경 공유 (sessionStorage)
+    const overrides = JSON.parse(sessionStorage.getItem('kdn_charger_overrides') || '{}');
+    list = list.map(c => overrides[c.id]
+      ? { ...c, status: overrides[c.id].status, lastUpdate: overrides[c.id].lastUpdate }
+      : c
+    );
     if (stationId) list = list.filter(c => c.stationId === stationId);
     if (status)    list = list.filter(c => c.status === status);
     return list;
@@ -148,14 +154,23 @@ async function updateFaultStatus(id, status) {
 }
 
 async function updateChargerStatus(id, status) {
+  const now = new Date().toISOString();
   const charger = CHARGERS.find(c => c.id === id);
   if (charger) {
     charger.status = status;
     if (status !== 'charging') { charger.chargePercent = null; charger.connectedVehicle = null; }
-    charger.lastUpdate = new Date().toISOString();
+    charger.lastUpdate = now;
   }
-  if (!db) return;
-  const { error } = await db.from('chargers').update({ status, last_update: new Date().toISOString() }).eq('id', id);
+  if (!db) {
+    // mock 환경: sessionStorage에 저장해 다른 페이지에서도 반영
+    const overrides = JSON.parse(sessionStorage.getItem('kdn_charger_overrides') || '{}');
+    overrides[id] = { status, lastUpdate: now };
+    sessionStorage.setItem('kdn_charger_overrides', JSON.stringify(overrides));
+    return;
+  }
+  const update = { status, last_update: now };
+  if (status !== 'charging') { update.charge_percent = null; update.connected_vehicle = null; }
+  const { error } = await db.from('chargers').update(update).eq('id', id);
   if (error) console.error('updateChargerStatus:', error);
 }
 
