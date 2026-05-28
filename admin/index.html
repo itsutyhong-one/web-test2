@@ -8,10 +8,36 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="admin.css"/>
   <style>
-    /* ─── 위젯 래퍼 ───────────────────────────────── */
-    .dash-section { margin-bottom: 16px; border-radius: 14px; }
+    /* ─── 대시보드 레이아웃 (flex + 2단) ─────────────── */
+    #dashboardContent {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .dash-section {
+      flex: 0 0 100%;
+      min-width: 0;
+      border-radius: 14px;
+    }
+    .dash-section.half-width { flex: 0 0 calc(50% - 8px); }
     .dash-section > .card,
     .dash-section > .stat-grid { margin-bottom: 0 !important; }
+    .drop-ph { flex: 0 0 100%; }
+
+    /* 반응형 */
+    @media (max-width: 960px) {
+      .dash-section.half-width { flex: 0 0 100%; }
+    }
+    @media (max-width: 720px) {
+      .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .wcat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+    @media (max-width: 480px) {
+      .stat-grid { grid-template-columns: repeat(1, 1fr) !important; }
+      .wcat-grid { grid-template-columns: 1fr !important; }
+      #editDashBtn { padding: 5px 10px; font-size: 0.75rem; }
+    }
 
     /* 핸들 바 */
     .dash-handle {
@@ -40,6 +66,17 @@
       flex-shrink: 0; transition: background 0.15s, color 0.15s;
     }
     .dash-remove:hover { background: #ef4444; color: #fff; }
+
+    /* 크기 조절 버튼 */
+    .dash-resize {
+      height: 22px; padding: 0 7px; border-radius: 5px;
+      border: 1.5px solid #93c5fd; background: rgba(37,99,235,0.07);
+      color: #2563eb; font-size: 0.7rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background 0.15s; font-family: inherit;
+      white-space: nowrap;
+    }
+    .dash-resize:hover { background: rgba(37,99,235,0.18); }
 
     .dash-section.edit-mode { outline: 1.5px dashed #bfdbfe; outline-offset: 2px; }
     .dash-section.edit-mode .dash-handle { display: flex; }
@@ -71,7 +108,7 @@
       border-radius: 14px;
       padding: 20px;
       background: #f8faff;
-      margin-top: 4px;
+      margin-bottom: 16px;
     }
     .wcat.show { display: block; }
     .wcat-title { font-size: 0.82rem; font-weight: 700; color: #2563eb; margin-bottom: 14px; }
@@ -116,11 +153,11 @@
     </div>
 
     <div class="page-content">
-      <div id="dashboardContent"></div>
       <div class="wcat" id="widgetCatalog">
         <div class="wcat-title">➕ 추가할 수 있는 위젯</div>
         <div class="wcat-grid" id="widgetCatalogGrid"></div>
       </div>
+      <div id="dashboardContent"></div>
     </div>
   </div>
 
@@ -153,16 +190,39 @@
     localStorage.setItem('kdn_dash_order', JSON.stringify(ids));
   }
 
+  // ── 너비 저장/불러오기 ──────────────────────────────
+  function getWidths() {
+    return JSON.parse(localStorage.getItem('kdn_dash_widths') || '{}');
+  }
+  function saveWidths() {
+    const w = {};
+    document.querySelectorAll('#dashboardContent > .dash-section.half-width').forEach(s => {
+      w[s.dataset.id] = 'half';
+    });
+    localStorage.setItem('kdn_dash_widths', JSON.stringify(w));
+  }
+  function toggleWidth(id) {
+    const sec = document.querySelector(`.dash-section[data-id="${id}"]`);
+    if (!sec) return;
+    const isHalf = sec.classList.toggle('half-width');
+    const btn = sec.querySelector('.dash-resize');
+    if (btn) { btn.textContent = isHalf ? '◼ 전체' : '⬛⬜ 반반'; }
+    saveWidths();
+  }
+
   // ── 위젯 DOM 빌더 ────────────────────────────────────
   function buildSection(def) {
     const sec = document.createElement('div');
     sec.className = 'dash-section';
     sec.dataset.id = def.id;
+    const isHalf = getWidths()[def.id] === 'half';
+    if (isHalf) sec.classList.add('half-width');
     sec.innerHTML = `
       <div class="dash-handle">
         <span class="dash-grip">⠿⠿</span>
         <span>${def.icon} ${def.label}</span>
         <span class="dash-hint">드래그하여 이동</span>
+        <button class="dash-resize" onclick="toggleWidth('${def.id}')">${isHalf ? '◼ 전체' : '⬛⬜ 반반'}</button>
         <button class="dash-remove" onclick="removeWidget('${def.id}')">✕</button>
       </div>
       <div id="wc-${def.id}"></div>`;
