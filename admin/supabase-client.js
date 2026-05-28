@@ -171,7 +171,10 @@ async function updateChargerStatus(id, status) {
   const update = { status, last_update: now };
   if (status !== 'charging') { update.charge_percent = null; update.connected_vehicle = null; }
   const { error } = await db.from('chargers').update(update).eq('id', id);
-  if (error) console.error('updateChargerStatus:', error);
+  if (error) {
+    console.error('updateChargerStatus:', error);
+    if (typeof showToast === 'function') showToast('충전기 상태 DB 반영 실패: ' + error.message, 'error');
+  }
 }
 
 async function insertNotice(notice) {

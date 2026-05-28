@@ -200,19 +200,27 @@
         </table>
       `;
       document.getElementById('faultStatusBtn').onclick = async () => {
-        await updateFaultStatus(f.id, '처리중');
-        f.status = '처리중';
-        document.getElementById('faultDetailModal').classList.remove('open');
-        renderFaultList();
-        showToast('처리중으로 변경되었습니다.');
+        try {
+          await updateFaultStatus(f.id, '처리중');
+          f.status = '처리중';
+          document.getElementById('faultDetailModal').classList.remove('open');
+          renderFaultList();
+          showToast('처리중으로 변경되었습니다.');
+        } catch (err) {
+          showToast('상태 변경 오류: ' + (err.message || '알 수 없는 오류'), 'error');
+        }
       };
       document.getElementById('faultDoneBtn').onclick = async () => {
-        await updateFaultStatus(f.id, '완료');
-        f.status = '완료';
-        await updateChargerStatus(f.chargerId, 'available');
-        document.getElementById('faultDetailModal').classList.remove('open');
-        renderFaultList();
-        showToast('완료 처리되었습니다. 충전기가 충전가능 상태로 변경되었습니다.');
+        try {
+          await updateFaultStatus(f.id, '완료');
+          f.status = '완료';
+          await updateChargerStatus(f.chargerId, 'available');
+          document.getElementById('faultDetailModal').classList.remove('open');
+          renderFaultList();
+          showToast('완료 처리 — 충전기가 충전가능 상태로 변경되었습니다.');
+        } catch (err) {
+          showToast('완료 처리 오류: ' + (err.message || '알 수 없는 오류'), 'error');
+        }
       };
       document.getElementById('faultDetailModal').classList.add('open');
     }
@@ -252,41 +260,54 @@
       }
 
       const st = STATIONS.find(s => s.id === stId);
-      const newId = 'FLT' + String(localFaults.length + 1).padStart(3, '0');
+      // 타임스탬프 기반 ID — DB 중복 충돌 방지
+      const newId = 'FLT' + Date.now().toString(36).toUpperCase();
       const now = new Date().toLocaleString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }).replace(/\. /g, '-').replace('.', '');
-
       const action = document.getElementById('faultAction').value.trim();
 
-      await insertFault({
-        id: newId,
-        chargerId: chId,
-        stationId: stId,
-        stationName: st.name,
-        type,
-        severity,
-        status: '접수',
-        reportedAt: now,
-        desc,
-        actionTaken: action,
-      });
-      localFaults.unshift({
-        id: newId,
-        chargerId: chId,
-        stationName: st.name,
-        type,
-        severity,
-        status: '접수',
-        reportedAt: now,
-        desc,
-        actionTaken: action,
-      });
+      const submitBtn = document.querySelector('button[onclick="submitFault()"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '등록 중...';
 
-      // 충전기 상태 → 고장으로 변경 (메모리 + DB)
-      await updateChargerStatus(chId, 'fault');
+      try {
+        await insertFault({
+          id: newId,
+          chargerId: chId,
+          stationId: stId,
+          stationName: st.name,
+          type,
+          severity,
+          status: '접수',
+          reportedAt: now,
+          desc,
+          actionTaken: action,
+        });
 
-      resetFaultForm();
-      renderFaultList();
-      showToast(`고장이 접수되었습니다. (${newId})`);
+        localFaults.unshift({
+          id: newId,
+          chargerId: chId,
+          stationName: st.name,
+          type,
+          severity,
+          status: '접수',
+          reportedAt: now,
+          desc,
+          actionTaken: action,
+        });
+
+        // 충전기 상태 → 고장 (메모리 + DB/sessionStorage 모두 반영)
+        await updateChargerStatus(chId, 'fault');
+
+        resetFaultForm();
+        renderFaultList();
+        showToast(`고장 접수 완료 (${newId}) — 충전기가 고장 상태로 변경되었습니다.`);
+      } catch (err) {
+        console.error('고장 등록 오류:', err);
+        showToast('고장 등록 중 오류가 발생했습니다: ' + (err.message || '알 수 없는 오류'), 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '고장 등록';
+      }
     }
 
     // URL 파라미터로 충전기 ID 자동 선택
