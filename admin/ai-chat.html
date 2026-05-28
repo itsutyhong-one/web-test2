@@ -720,12 +720,12 @@
     // ============================================================
     async function sendMessage(text) {
       text = text.trim();
-      if (!text) return;
+      if (!text && !pendingCtx) return;
 
       let fullContent = text;
       const attachedLabel = pendingCtx ? pendingLabel : null;
       if (pendingCtx) {
-        fullContent = pendingCtx + '\n\n---\n\n' + text;
+        fullContent = pendingCtx + '\n\n---\n\n' + (text || '첨부된 데이터를 분석해 주세요.');
         clearAttach();
       }
 
@@ -762,12 +762,14 @@
       pendingLabel = label;
       document.getElementById('attachBar').style.display = 'flex';
       document.getElementById('attachLabel').textContent = label;
+      updateSendBtn();
     }
 
     function clearAttach() {
       pendingCtx   = null;
       pendingLabel = null;
       document.getElementById('attachBar').style.display = 'none';
+      updateSendBtn();
     }
 
     // ============================================================
@@ -826,7 +828,7 @@
 
     function updateSendBtn() {
       const val = document.getElementById('chatInput').value.trim();
-      document.getElementById('sendBtn').disabled = !val || !decryptedKey;
+      document.getElementById('sendBtn').disabled = !(val || pendingCtx) || !decryptedKey;
     }
 
     // ============================================================
