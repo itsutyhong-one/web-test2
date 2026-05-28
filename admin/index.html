@@ -69,14 +69,24 @@
 
     /* 크기 조절 버튼 */
     .dash-resize {
-      height: 22px; padding: 0 7px; border-radius: 5px;
+      height: 22px; padding: 0 8px; border-radius: 5px;
       border: 1.5px solid #93c5fd; background: rgba(37,99,235,0.07);
-      color: #2563eb; font-size: 0.7rem; font-weight: 700;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      color: #2563eb; font-size: 0.72rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; gap: 4px;
       flex-shrink: 0; transition: background 0.15s; font-family: inherit;
       white-space: nowrap;
     }
     .dash-resize:hover { background: rgba(37,99,235,0.18); }
+    .dash-resize .ri {
+      display: flex; gap: 2px; align-items: center;
+    }
+    .dash-resize .ri span {
+      display: inline-block; height: 10px; background: currentColor;
+      border-radius: 1px; opacity: 0.7;
+    }
+    .dash-resize .ri .r1 { width: 14px; }
+    .dash-resize .ri .r2 { width: 6px; }
+    .dash-resize .ri .r3 { width: 6px; }
 
     .dash-section.edit-mode { outline: 1.5px dashed #bfdbfe; outline-offset: 2px; }
     .dash-section.edit-mode .dash-handle { display: flex; }
@@ -174,8 +184,8 @@
     { id: 'weekly',      icon: '💰', label: '주간 매출',        desc: '최근 7일 일별 매출 바 차트',     defaultOn: true  },
     { id: 'history',     icon: '📋', label: '최근 충전 내역',   desc: '최신 충전 기록 10건',            defaultOn: true  },
     { id: 'stationRank', icon: '🏆', label: '충전소 매출 순위', desc: '충전소별 누적 매출 TOP 5',       defaultOn: false },
-    { id: 'visitors',    icon: '👥', label: '방문자 현황',      desc: '일별 홈페이지 방문자 수',        defaultOn: false, needsSQL: 'page_views' },
-    { id: 'members',     icon: '📝', label: '회원 가입 현황',   desc: '일별 신규 회원 가입 수',         defaultOn: false, needsSQL: 'members'    },
+    { id: 'visitors',    icon: '👥', label: '방문자 현황',      desc: '일별 홈페이지 방문자 수',        defaultOn: false },
+    { id: 'members',     icon: '📝', label: '회원 가입 현황',   desc: '일별 신규 회원 가입 수',         defaultOn: false },
   ];
 
   // ── 상태 ────────────────────────────────────────────
@@ -201,12 +211,18 @@
     });
     localStorage.setItem('kdn_dash_widths', JSON.stringify(w));
   }
+  function resizeBtnHTML(isHalf) {
+    if (isHalf) {
+      return `<span class="ri"><span class="r1"></span></span>1단`;
+    }
+    return `<span class="ri"><span class="r2"></span><span class="r3"></span></span>2단`;
+  }
   function toggleWidth(id) {
     const sec = document.querySelector(`.dash-section[data-id="${id}"]`);
     if (!sec) return;
     const isHalf = sec.classList.toggle('half-width');
     const btn = sec.querySelector('.dash-resize');
-    if (btn) { btn.textContent = isHalf ? '◼ 전체' : '⬛⬜ 반반'; }
+    if (btn) btn.innerHTML = resizeBtnHTML(isHalf);
     saveWidths();
   }
 
@@ -222,7 +238,7 @@
         <span class="dash-grip">⠿⠿</span>
         <span>${def.icon} ${def.label}</span>
         <span class="dash-hint">드래그하여 이동</span>
-        <button class="dash-resize" onclick="toggleWidth('${def.id}')">${isHalf ? '◼ 전체' : '⬛⬜ 반반'}</button>
+        <button class="dash-resize" onclick="toggleWidth('${def.id}')">${resizeBtnHTML(isHalf)}</button>
         <button class="dash-remove" onclick="removeWidget('${def.id}')">✕</button>
       </div>
       <div id="wc-${def.id}"></div>`;
