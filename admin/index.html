@@ -56,6 +56,21 @@
 
       </div>
 
+      <!-- 주간 매출 현황 -->
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header">
+          <span class="card-title">주간 매출 현황</span>
+          <span id="weeklyChangeBadge" style="font-size:0.82rem;font-weight:700;padding:4px 14px;border-radius:100px;"></span>
+          <a href="history.html" class="btn btn-sm btn-secondary" style="margin-left:8px;">전체보기</a>
+        </div>
+        <div class="card-body" style="display:flex;gap:32px;align-items:flex-start;">
+          <div id="weeklyStats" style="flex-shrink:0;min-width:155px;"></div>
+          <div style="flex:1;min-width:0;position:relative;">
+            <canvas id="weeklyChart" height="160" style="display:block;width:100%;"></canvas>
+          </div>
+        </div>
+      </div>
+
       <!-- 오늘 충전 내역 -->
       <div class="card">
         <div class="card-header">
@@ -281,6 +296,153 @@
           <div style="font-size:0.78rem;color:#bbb;margin-top:2px;">${f.reportedAt}</div>
         </div>
       `).join('') + `<div style="text-align:center;padding:12px;"><a href="fault.html" style="font-size:0.82rem;color:#00a87a;">전체 고장 내역 보기 →</a></div>`;
+
+      // ── 주간 매출 계산 ──────────────────────────────
+      const todayMidnight = new Date();
+      todayMidnight.setHours(0, 0, 0, 0);
+
+      // 이번 주: 오늘 포함 최근 7일 / 지난 주: 그 전 7일
+      const thisWeekStart = new Date(todayMidnight);
+      thisWeekStart.setDate(todayMidnight.getDate() - 6);
+      const lastWeekStart = new Date(thisWeekStart);
+      lastWeekStart.setDate(thisWeekStart.getDate() - 7);
+
+      let thisWeekTotal = 0, lastWeekTotal = 0;
+      const dailyRevMap = {};
+
+      HISTORY.forEach(h => {
+        const t = new Date(h.startTime);
+        const dayKey = `${t.getFullYear()}-${t.getMonth()}-${t.getDate()}`;
+        if (t >= thisWeekStart) {
+          thisWeekTotal += h.amount;
+          dailyRevMap[dayKey] = (dailyRevMap[dayKey] || 0) + h.amount;
+        } else if (t >= lastWeekStart) {
+          lastWeekTotal += h.amount;
+        }
+      });
+
+      // 7일치 배열
+      const weekDays = [];
+      const DOW = ['일','월','화','수','목','금','토'];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(todayMidnight);
+        d.setDate(todayMidnight.getDate() - i);
+        const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+        weekDays.push({
+          date: `${d.getMonth()+1}/${d.getDate()}`,
+          dow: DOW[d.getDay()],
+          value: dailyRevMap[key] || 0,
+          isToday: i === 0,
+        });
+      }
+
+      const pctChange = lastWeekTotal > 0
+        ? Math.round((thisWeekTotal - lastWeekTotal) / lastWeekTotal * 100)
+        : null;
+
+      // 배지
+      const wcBadge = document.getElementById('weeklyChangeBadge');
+      if (pctChange !== null) {
+        const up = pctChange >= 0;
+        wcBadge.textContent = (up ? '▲ ' : '▼ ') + Math.abs(pctChange) + '% ' + (up ? '증가' : '감소');
+        wcBadge.style.background = up ? '#e8faf3' : '#fff5f5';
+        wcBadge.style.color = up ? '#00a87a' : '#e74c3c';
+      } else {
+        wcBadge.textContent = '지난 주 데이터 없음';
+        wcBadge.style.background = '#f0f2f7';
+        wcBadge.style.color = '#aaa';
+      }
+
+      // 요약 수치
+      document.getElementById('weeklyStats').innerHTML = `
+        <div style="margin-bottom:20px;">
+          <div style="font-size:0.75rem;color:#aaa;margin-bottom:5px;letter-spacing:0.02em;">이번 주 (최근 7일)</div>
+          <div style="font-size:1.45rem;font-weight:800;color:#1a202c;letter-spacing:-0.02em;">${formatKrw(thisWeekTotal)}</div>
+        </div>
+        <div style="padding-top:16px;border-top:1px solid #f0f2f7;">
+          <div style="font-size:0.75rem;color:#aaa;margin-bottom:5px;">지난 주 (7일 전)</div>
+          <div style="font-size:1rem;font-weight:600;color:#aaa;">${formatKrw(lastWeekTotal)}</div>
+        </div>
+      `;
+
+      // ── 바 차트 ─────────────────────────────────────
+      const wc = document.getElementById('weeklyChart');
+      const wcCtx = wc.getContext('2d');
+      const wcDpr = window.devicePixelRatio || 1;
+      const W = wc.parentElement.offsetWidth || 480;
+      const H = 160;
+      wc.width = W * wcDpr; wc.height = H * wcDpr;
+      wc.style.width = W + 'px'; wc.style.height = H + 'px';
+      wcCtx.scale(wcDpr, wcDpr);
+
+      const maxRev = Math.max(...weekDays.map(d => d.value), 1);
+      const chartB = H - 40, chartT = 24;
+      const slotW = W / weekDays.length;
+      const barW = Math.min(slotW * 0.5, 48);
+
+      // 가이드라인 3줄
+      wcCtx.strokeStyle = '#f0f2f7';
+      wcCtx.lineWidth = 1;
+      [0.33, 0.66, 1].forEach(r => {
+        const gy = chartB - r * (chartB - chartT);
+        wcCtx.beginPath(); wcCtx.moveTo(0, gy); wcCtx.lineTo(W, gy); wcCtx.stroke();
+        const label = Math.round(maxRev * r / 10000) + '만';
+        wcCtx.fillStyle = '#ccc';
+        wcCtx.font = `9px 'Noto Sans KR',sans-serif`;
+        wcCtx.textAlign = 'right';
+        wcCtx.fillText(label, W - 2, gy - 3);
+      });
+
+      weekDays.forEach((d, i) => {
+        const cx2 = slotW * i + slotW / 2;
+        const bx = cx2 - barW / 2;
+        const barH = d.value > 0 ? Math.max(4, (d.value / maxRev) * (chartB - chartT)) : 0;
+        const by = chartB - barH;
+
+        // 바 그라디언트
+        const grad = wcCtx.createLinearGradient(bx, by, bx, chartB);
+        if (d.isToday) {
+          grad.addColorStop(0, '#2563eb');
+          grad.addColorStop(1, '#93c5fd');
+        } else {
+          grad.addColorStop(0, '#c7d2fe');
+          grad.addColorStop(1, '#e0e7ff');
+        }
+        wcCtx.fillStyle = grad;
+        wcCtx.beginPath();
+        wcCtx.moveTo(bx + 3, by);
+        wcCtx.arcTo(bx + barW, by, bx + barW, chartB, 3);
+        wcCtx.lineTo(bx + barW, chartB);
+        wcCtx.lineTo(bx, chartB);
+        wcCtx.lineTo(bx, by + 3);
+        wcCtx.arcTo(bx, by, bx + barW, by, 3);
+        wcCtx.fill();
+
+        // 금액 레이블
+        if (d.value > 0) {
+          wcCtx.fillStyle = d.isToday ? '#2563eb' : '#94a3b8';
+          wcCtx.font = `${d.isToday ? 'bold ' : ''}10px 'Noto Sans KR',sans-serif`;
+          wcCtx.textAlign = 'center';
+          wcCtx.textBaseline = 'bottom';
+          const vLabel = d.value >= 10000 ? (d.value/10000).toFixed(1).replace(/\.0$/,'') + '만' : d.value.toLocaleString();
+          wcCtx.fillText(vLabel, cx2, by - 3);
+        }
+
+        // 날짜/요일 레이블
+        wcCtx.textBaseline = 'top';
+        wcCtx.textAlign = 'center';
+        wcCtx.fillStyle = d.isToday ? '#2563eb' : '#94a3b8';
+        wcCtx.font = `${d.isToday ? 'bold ' : ''}10px 'Noto Sans KR',sans-serif`;
+        wcCtx.fillText(d.date, cx2, chartB + 6);
+        wcCtx.fillStyle = d.isToday ? '#2563eb' : '#cbd5e1';
+        wcCtx.font = `9px 'Noto Sans KR',sans-serif`;
+        wcCtx.fillText(d.dow, cx2, chartB + 20);
+      });
+
+      // 베이스라인
+      wcCtx.strokeStyle = '#e2e8f0';
+      wcCtx.lineWidth = 1.5;
+      wcCtx.beginPath(); wcCtx.moveTo(0, chartB); wcCtx.lineTo(W, chartB); wcCtx.stroke();
 
       // 최근 충전 내역
       const tbody = document.getElementById('recentHistoryBody');
