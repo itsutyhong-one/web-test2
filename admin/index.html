@@ -135,41 +135,126 @@
         { label: '오프라인', count: CHARGERS.filter(c=>c.status==='offline').length, cls: 'badge-offline', color: '#999' },
         { label: '점검 중', count: CHARGERS.filter(c=>c.status==='maintenance').length, cls: 'badge-maintenance', color: '#d97706' },
       ];
-      // 도넛 차트 그리기
+      // 도넛 차트 — 인터랙티브 애니메이션
       const canvas = document.getElementById('statusDonut');
       const ctx = canvas.getContext('2d');
-      const cx = 75, cy = 75, outerR = 62, innerR = 38;
       const dpr = window.devicePixelRatio || 1;
-      canvas.width  = 150 * dpr; canvas.height = 150 * dpr;
-      canvas.style.width = '150px'; canvas.style.height = '150px';
+      const SIZE = 160;
+      canvas.width = SIZE * dpr; canvas.height = SIZE * dpr;
+      canvas.style.width = SIZE + 'px'; canvas.style.height = SIZE + 'px';
       ctx.scale(dpr, dpr);
+      const cx = SIZE / 2, cy = SIZE / 2, outerR = 66, innerR = 40;
 
-      let startAngle = -Math.PI / 2;
+      // 세그먼트 사전 계산 (0→2π, 상단 기준)
+      const segments = [];
+      let cumAngle = 0;
       statusData.forEach(s => {
         if (s.count === 0) return;
         const slice = (s.count / totalChargers) * 2 * Math.PI;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.arc(cx, cy, outerR, startAngle, startAngle + slice);
-        ctx.closePath();
-        ctx.fillStyle = s.color;
-        ctx.fill();
-        startAngle += slice;
+        segments.push({ ...s, start: cumAngle, end: cumAngle + slice });
+        cumAngle += slice;
       });
-      // 도넛 구멍
-      ctx.beginPath();
-      ctx.arc(cx, cy, innerR, 0, 2 * Math.PI);
-      ctx.fillStyle = '#ffffff';
-      ctx.fill();
-      // 중앙 텍스트
-      ctx.fillStyle = '#1a202c';
-      ctx.font = `bold 22px 'Noto Sans KR', sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(totalChargers, cx, cy - 10);
-      ctx.font = `12px 'Noto Sans KR', sans-serif`;
-      ctx.fillStyle = '#aaa';
-      ctx.fillText('전체 충전기', cx, cy + 12);
+
+      let hoveredSeg = null;
+      const expand = new Array(segments.length).fill(0);
+      let rafId = null;
+
+      function drawDonut() {
+        ctx.clearRect(0, 0, SIZE, SIZE);
+
+        // 세그먼트
+        segments.forEach((s, i) => {
+          const r = outerR + expand[i];
+          const gap = 0.018;
+          const rs = s.start - Math.PI / 2 + gap;
+          const re = s.end   - Math.PI / 2 - gap;
+          if (re <= rs) return;
+
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.arc(cx, cy, r, rs, re);
+          ctx.closePath();
+
+          // 호버 시 밝은 glow
+          if (i === hoveredSeg) {
+            ctx.shadowColor = s.color;
+            ctx.shadowBlur = 10;
+          }
+          ctx.fillStyle = s.color;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        });
+
+        // 도넛 구멍
+        ctx.beginPath();
+        ctx.arc(cx, cy, innerR, 0, 2 * Math.PI);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+
+        // 중앙 텍스트
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        if (hoveredSeg !== null && segments[hoveredSeg]) {
+          const s = segments[hoveredSeg];
+          ctx.fillStyle = s.color;
+          ctx.font = `bold 20px 'Noto Sans KR', sans-serif`;
+          ctx.fillText(s.count + '대', cx, cy - 11);
+          ctx.font = `11px 'Noto Sans KR', sans-serif`;
+          ctx.fillStyle = '#555';
+          ctx.fillText(s.label, cx, cy + 11);
+        } else {
+          ctx.fillStyle = '#1a202c';
+          ctx.font = `bold 22px 'Noto Sans KR', sans-serif`;
+          ctx.fillText(totalChargers, cx, cy - 10);
+          ctx.font = `12px 'Noto Sans KR', sans-serif`;
+          ctx.fillStyle = '#aaa';
+          ctx.fillText('전체 충전기', cx, cy + 12);
+        }
+      }
+
+      function animLoop() {
+        let dirty = false;
+        segments.forEach((_, i) => {
+          const target = i === hoveredSeg ? 9 : 0;
+          const diff = target - expand[i];
+          if (Math.abs(diff) > 0.15) { expand[i] += diff * 0.2; dirty = true; }
+          else expand[i] = target;
+        });
+        drawDonut();
+        if (dirty) rafId = requestAnimationFrame(animLoop);
+        else rafId = null;
+      }
+
+      function triggerAnim() {
+        if (!rafId) rafId = requestAnimationFrame(animLoop);
+      }
+
+      canvas.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left - cx;
+        const my = e.clientY - rect.top - cy;
+        const dist = Math.sqrt(mx * mx + my * my);
+
+        if (dist < innerR || dist > outerR + 14) {
+          if (hoveredSeg !== null) { hoveredSeg = null; triggerAnim(); }
+          canvas.style.cursor = 'default';
+          return;
+        }
+
+        let a = Math.atan2(my, mx) + Math.PI / 2;
+        if (a < 0) a += 2 * Math.PI;
+        const idx = segments.findIndex(s => a >= s.start && a < s.end);
+        const next = idx >= 0 ? idx : null;
+        if (next !== hoveredSeg) { hoveredSeg = next; triggerAnim(); }
+        canvas.style.cursor = next !== null ? 'pointer' : 'default';
+      });
+
+      canvas.addEventListener('mouseleave', () => {
+        hoveredSeg = null;
+        triggerAnim();
+      });
+
+      drawDonut();
 
       // 상태 바 목록
       document.getElementById('statusSummary').innerHTML = statusData.map(s => `
