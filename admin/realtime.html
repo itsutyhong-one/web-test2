@@ -48,6 +48,24 @@
     .status-접수  { background:#fff8e8;color:#d97706; }
     .status-처리중 { background:#e8f0ff;color:#2563eb; }
     .status-완료  { background:#e8faf3;color:#00a87a; }
+
+    /* 컴팩트 타일 */
+    .realtime-grid {
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 8px;
+    }
+    .charger-tile {
+      padding: 10px 10px 8px;
+      border-radius: 10px;
+      border-width: 1.5px;
+    }
+    .charger-tile-icon { font-size: 1.25rem; margin-bottom: 3px; }
+    .charger-tile-id   { font-size: 0.68rem; margin-bottom: 2px; }
+    .charger-tile-name { font-size: 0.8rem;  margin-bottom: 3px; }
+    .charger-tile-power{ font-size: 0.7rem;  margin-bottom: 5px; color: #aaa; }
+    .charger-tile .badge { font-size: 0.68rem; padding: 2px 7px; }
+    .charging-progress { margin-top: 5px; height: 4px; }
+    .charging-progress-bar { border-radius: 2px; }
   </style>
 </head>
 <body data-page="realtime">
