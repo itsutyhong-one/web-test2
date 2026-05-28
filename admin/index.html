@@ -555,44 +555,75 @@
       </div>`).join('');
   }
 
-  function renderVisitors() {
-    const days = getMockDays(7, 80, 230);
-    const today = days[days.length-1].value;
+  async function renderVisitors() {
+    const DOW = ['일','월','화','수','목','금','토'];
+    const today = new Date(); today.setHours(0,0,0,0);
+    const dayMap = await getPageViews({ days: 7 });
+    const isReal = dayMap !== null;
+
+    const days = Array.from({length:7}, (_,i) => {
+      const d = new Date(today); d.setDate(today.getDate()-(6-i));
+      const k = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      const val = isReal ? (dayMap[k]||0) : getMockDays(7,80,230)[i].value;
+      return { label:`${d.getMonth()+1}/${d.getDate()}`, dow:DOW[d.getDay()], value:val, isToday:i===6 };
+    });
+
+    // 배지 업데이트
+    const badge = document.querySelector('#wc-visitors .demo-badge');
+    if (badge) {
+      if (isReal) { badge.textContent='실시간'; badge.style.cssText='font-size:0.72rem;color:#00a87a;padding:3px 8px;background:#e8faf3;border:1px solid #6ee7b7;border-radius:6px;'; }
+    }
+    const notice = document.querySelector('#wc-visitors .sql-notice');
+    if (notice) notice.style.display = isReal ? 'none' : '';
+
+    const todayVal = days[days.length-1].value;
     const total = days.reduce((s,d)=>s+d.value,0);
     const statsEl = document.getElementById('visitorStats');
     if (statsEl) statsEl.innerHTML = `
       <div style="margin-bottom:20px;">
         <div style="font-size:0.75rem;color:#aaa;margin-bottom:5px;">오늘 방문자</div>
-        <div style="font-size:1.4rem;font-weight:800;color:#1a202c;">${today.toLocaleString()}<span style="font-size:0.85rem;color:#aaa;font-weight:400;">명</span></div>
+        <div style="font-size:1.4rem;font-weight:800;color:#1a202c;">${todayVal.toLocaleString()}<span style="font-size:0.85rem;color:#aaa;font-weight:400;">명</span></div>
       </div>
       <div style="padding-top:16px;border-top:1px solid #f0f2f7;">
         <div style="font-size:0.75rem;color:#aaa;margin-bottom:5px;">7일 합계</div>
         <div style="font-size:1rem;font-weight:600;color:#aaa;">${total.toLocaleString()}명</div>
       </div>`;
-    requestAnimationFrame(() => drawBarChart({
-      canvasId: 'visitorChart', H: 140, days,
-      colorFn: (d) => d.isToday ? '#2563eb' : '#c7d2fe',
-    }));
+    requestAnimationFrame(() => drawBarChart({ canvasId:'visitorChart', H:140, days, colorFn:(d)=>d.isToday?'#2563eb':'#c7d2fe' }));
   }
 
-  function renderMembers() {
-    const days = getMockDays(7, 2, 20);
-    const today = days[days.length-1].value;
+  async function renderMembers() {
+    const DOW = ['일','월','화','수','목','금','토'];
+    const today = new Date(); today.setHours(0,0,0,0);
+    const dayMap = await getMembers({ days: 7 });
+    const isReal = dayMap !== null;
+
+    const days = Array.from({length:7}, (_,i) => {
+      const d = new Date(today); d.setDate(today.getDate()-(6-i));
+      const k = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      const val = isReal ? (dayMap[k]||0) : getMockDays(7,2,20)[i].value;
+      return { label:`${d.getMonth()+1}/${d.getDate()}`, dow:DOW[d.getDay()], value:val, isToday:i===6 };
+    });
+
+    const badge = document.querySelector('#wc-members .demo-badge');
+    if (badge) {
+      if (isReal) { badge.textContent='실시간'; badge.style.cssText='font-size:0.72rem;color:#00a87a;padding:3px 8px;background:#e8faf3;border:1px solid #6ee7b7;border-radius:6px;'; }
+    }
+    const notice = document.querySelector('#wc-members .sql-notice');
+    if (notice) notice.style.display = isReal ? 'none' : '';
+
+    const todayVal = days[days.length-1].value;
     const total = days.reduce((s,d)=>s+d.value,0);
     const statsEl = document.getElementById('memberStats');
     if (statsEl) statsEl.innerHTML = `
       <div style="margin-bottom:20px;">
         <div style="font-size:0.75rem;color:#aaa;margin-bottom:5px;">오늘 신규 회원</div>
-        <div style="font-size:1.4rem;font-weight:800;color:#1a202c;">${today}<span style="font-size:0.85rem;color:#aaa;font-weight:400;">명</span></div>
+        <div style="font-size:1.4rem;font-weight:800;color:#1a202c;">${todayVal}<span style="font-size:0.85rem;color:#aaa;font-weight:400;">명</span></div>
       </div>
       <div style="padding-top:16px;border-top:1px solid #f0f2f7;">
         <div style="font-size:0.75rem;color:#aaa;margin-bottom:5px;">7일 합계</div>
         <div style="font-size:1rem;font-weight:600;color:#aaa;">${total}명</div>
       </div>`;
-    requestAnimationFrame(() => drawBarChart({
-      canvasId: 'memberChart', H: 140, days,
-      colorFn: (d) => d.isToday ? '#00c896' : '#a7f3d0',
-    }));
+    requestAnimationFrame(() => drawBarChart({ canvasId:'memberChart', H:140, days, colorFn:(d)=>d.isToday?'#00c896':'#a7f3d0' }));
   }
 
   function renderWidget(id) {

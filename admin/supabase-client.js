@@ -233,6 +233,42 @@ function subscribeToChargers(onUpdate) {
     .subscribe();
 }
 
+async function getPageViews({ days = 7 } = {}) {
+  if (!db) return null;
+  const since = new Date();
+  since.setDate(since.getDate() - days + 1);
+  since.setHours(0, 0, 0, 0);
+  const { data, error } = await db.from('page_views')
+    .select('visited_at')
+    .gte('visited_at', since.toISOString());
+  if (error) { console.error('page_views:', error); return null; }
+  const map = {};
+  data.forEach(r => {
+    const d = new Date(r.visited_at);
+    const k = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    map[k] = (map[k] || 0) + 1;
+  });
+  return map;
+}
+
+async function getMembers({ days = 7 } = {}) {
+  if (!db) return null;
+  const since = new Date();
+  since.setDate(since.getDate() - days + 1);
+  since.setHours(0, 0, 0, 0);
+  const { data, error } = await db.from('members')
+    .select('joined_at')
+    .gte('joined_at', since.toISOString());
+  if (error) { console.error('members:', error); return null; }
+  const map = {};
+  data.forEach(r => {
+    const d = new Date(r.joined_at);
+    const k = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    map[k] = (map[k] || 0) + 1;
+  });
+  return map;
+}
+
 function subscribeToFaults(onInsert) {
   if (!db) return null;
   return db.channel('faults-realtime')
