@@ -44,6 +44,10 @@
       gap: 8px;
     }
     .charger-detail-modal .modal { max-width: 480px; }
+    .fault-status-badge { padding:3px 10px;border-radius:100px;font-size:0.75rem;font-weight:700; }
+    .status-접수  { background:#fff8e8;color:#d97706; }
+    .status-처리중 { background:#e8f0ff;color:#2563eb; }
+    .status-완료  { background:#e8faf3;color:#00a87a; }
   </style>
 </head>
 <body data-page="realtime">
@@ -171,6 +175,12 @@
     function showDetail(chargerId) {
       const c = CHARGERS.find(ch => ch.id === chargerId);
       if (!c) return;
+
+      // 해당 충전기의 미완료 고장 내역 조회
+      const activeFault = FAULTS.find(f => f.chargerId === chargerId && f.status !== '완료');
+      const sevLabel = { high: '긴급', medium: '보통', low: '경미' };
+      const sevClass = { high: 'badge-fault', medium: 'badge-maintenance', low: 'badge-offline' };
+
       document.getElementById('detailTitle').textContent = `${c.id} — ${c.port}`;
       document.getElementById('detailContent').innerHTML = `
         <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
@@ -192,6 +202,37 @@
           ` : ''}
           <tr><td style="padding:8px 0;color:#888;">최근 갱신</td><td>${formatDate(c.lastUpdate)}</td></tr>
         </table>
+        ${activeFault ? `
+          <div style="margin-top:16px;padding:14px 16px;background:#fff5f5;border:1.5px solid #fecaca;border-radius:10px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+              <span style="font-size:1rem;">⚠️</span>
+              <strong style="font-size:0.9rem;color:#e74c3c;">등록된 고장 내역</strong>
+              <span class="badge ${sevClass[activeFault.severity] || 'badge-offline'}" style="margin-left:auto;">
+                ${sevLabel[activeFault.severity] || activeFault.severity}
+              </span>
+              <span class="fault-status-badge status-${activeFault.status}">${activeFault.status}</span>
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+              <tr>
+                <td style="padding:5px 0;color:#888;width:80px;">고장 유형</td>
+                <td style="font-weight:600;color:#c0392b;">${activeFault.type}</td>
+              </tr>
+              <tr>
+                <td style="padding:5px 0;color:#888;vertical-align:top;">증상 설명</td>
+                <td style="color:#555;line-height:1.6;">${activeFault.desc || '-'}</td>
+              </tr>
+              ${activeFault.actionTaken ? `
+              <tr>
+                <td style="padding:5px 0;color:#888;vertical-align:top;">조치 내용</td>
+                <td style="color:#555;line-height:1.6;">${activeFault.actionTaken}</td>
+              </tr>` : ''}
+              <tr>
+                <td style="padding:5px 0;color:#888;">접수 시각</td>
+                <td style="color:#888;font-size:0.82rem;">${activeFault.reportedAt}</td>
+              </tr>
+            </table>
+          </div>
+        ` : ''}
       `;
       document.getElementById('detailFaultBtn').onclick = () => {
         window.location.href = `fault.html?chargerId=${c.id}`;
