@@ -52,4 +52,22 @@
     if (error) { console.error('history count:', error); return null; }
     return count;
   };
+
+  // ── 페이지 방문 기록 ──────────────────────────────
+  window.trackPageView = async function() {
+    if (!db) return;
+    // 세션 ID: 탭을 닫기 전까지 유지
+    let sid = sessionStorage.getItem('kdn_sid');
+    if (!sid) {
+      sid = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      sessionStorage.setItem('kdn_sid', sid);
+    }
+    const page = window.location.pathname.split('/').pop() || 'index.html';
+    try {
+      await db.from('page_views').insert({ page, session_id: sid });
+    } catch (_) {}
+  };
+
+  // 페이지 로드 시 자동 기록
+  document.addEventListener('DOMContentLoaded', window.trackPageView);
 })();
