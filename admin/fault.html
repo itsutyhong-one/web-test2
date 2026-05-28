@@ -184,17 +184,20 @@
           <tr><td style="padding:8px 0;color:#888;vertical-align:top;padding-top:12px;">증상 설명</td><td style="line-height:1.6;">${f.desc}</td></tr>
         </table>
       `;
-      document.getElementById('faultStatusBtn').onclick = () => {
+      document.getElementById('faultStatusBtn').onclick = async () => {
+        await updateFaultStatus(f.id, '처리중');
         f.status = '처리중';
         document.getElementById('faultDetailModal').classList.remove('open');
         renderFaultList();
         showToast('처리중으로 변경되었습니다.');
       };
-      document.getElementById('faultDoneBtn').onclick = () => {
+      document.getElementById('faultDoneBtn').onclick = async () => {
+        await updateFaultStatus(f.id, '완료');
         f.status = '완료';
+        await updateChargerStatus(f.chargerId, 'available');
         document.getElementById('faultDetailModal').classList.remove('open');
         renderFaultList();
-        showToast('완료 처리되었습니다.');
+        showToast('완료 처리되었습니다. 충전기가 충전가능 상태로 변경되었습니다.');
       };
       document.getElementById('faultDetailModal').classList.add('open');
     }
@@ -237,6 +240,8 @@
       const newId = 'FLT' + String(localFaults.length + 1).padStart(3, '0');
       const now = new Date().toLocaleString('ko-KR', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }).replace(/\. /g, '-').replace('.', '');
 
+      const action = document.getElementById('faultAction').value.trim();
+
       await insertFault({
         id: newId,
         chargerId: chId,
@@ -247,6 +252,7 @@
         status: '접수',
         reportedAt: now,
         desc,
+        actionTaken: action,
       });
       localFaults.unshift({
         id: newId,
@@ -257,11 +263,11 @@
         status: '접수',
         reportedAt: now,
         desc,
+        actionTaken: action,
       });
 
-      // 충전기 상태 → 고장으로 변경
-      const charger = CHARGERS.find(c => c.id === chId);
-      if (charger) charger.status = 'fault';
+      // 충전기 상태 → 고장으로 변경 (메모리 + DB)
+      await updateChargerStatus(chId, 'fault');
 
       resetFaultForm();
       renderFaultList();

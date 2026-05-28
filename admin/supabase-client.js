@@ -88,6 +88,8 @@ async function getFaults({ status } = {}) {
     stationName: f.stations?.name || '',
     chargerId:   f.chargers?.id  || f.charger_id,
     reportedAt:  new Date(f.reported_at).toLocaleString('ko-KR').slice(0,-3),
+    desc:        f.description   || '',
+    actionTaken: f.action_taken  || '',
   }));
 }
 
@@ -128,7 +130,7 @@ async function insertFault(fault) {
   const row = {
     id: fault.id, station_id: fault.stationId || STATIONS.find(s=>s.name===fault.stationName)?.id,
     charger_id: fault.chargerId, type: fault.type, severity: fault.severity,
-    status: '접수', description: fault.desc
+    status: '접수', description: fault.desc, action_taken: fault.actionTaken || null,
   };
   const { data, error } = await db.from('faults').insert(row).select().single();
   if (error) throw error;
@@ -136,15 +138,25 @@ async function insertFault(fault) {
 }
 
 async function updateFaultStatus(id, status) {
-  if (!db) {
-    const f = FAULTS.find(x => x.id === id);
-    if (f) f.status = status;
-    return;
-  }
+  const f = FAULTS.find(x => x.id === id);
+  if (f) f.status = status;
+  if (!db) return;
   const update = { status };
   if (status === '완료') update.resolved_at = new Date().toISOString();
   const { error } = await db.from('faults').update(update).eq('id', id);
   if (error) throw error;
+}
+
+async function updateChargerStatus(id, status) {
+  const charger = CHARGERS.find(c => c.id === id);
+  if (charger) {
+    charger.status = status;
+    if (status !== 'charging') { charger.chargePercent = null; charger.connectedVehicle = null; }
+    charger.lastUpdate = new Date().toISOString();
+  }
+  if (!db) return;
+  const { error } = await db.from('chargers').update({ status, last_update: new Date().toISOString() }).eq('id', id);
+  if (error) console.error('updateChargerStatus:', error);
 }
 
 async function insertNotice(notice) {
