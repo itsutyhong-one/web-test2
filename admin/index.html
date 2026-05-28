@@ -37,7 +37,12 @@
             <span class="card-title">충전기 상태 요약</span>
             <a href="realtime.html" class="btn btn-sm btn-secondary">전체보기</a>
           </div>
-          <div class="card-body" id="statusSummary"></div>
+          <div class="card-body" style="display:flex;gap:24px;align-items:center;">
+            <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px;">
+              <canvas id="statusDonut" width="150" height="150"></canvas>
+            </div>
+            <div id="statusSummary" style="flex:1;"></div>
+          </div>
         </div>
 
         <!-- 최근 고장 접수 -->
@@ -130,13 +135,53 @@
         { label: '오프라인', count: CHARGERS.filter(c=>c.status==='offline').length, cls: 'badge-offline', color: '#999' },
         { label: '점검 중', count: CHARGERS.filter(c=>c.status==='maintenance').length, cls: 'badge-maintenance', color: '#d97706' },
       ];
+      // 도넛 차트 그리기
+      const canvas = document.getElementById('statusDonut');
+      const ctx = canvas.getContext('2d');
+      const cx = 75, cy = 75, outerR = 62, innerR = 38;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width  = 150 * dpr; canvas.height = 150 * dpr;
+      canvas.style.width = '150px'; canvas.style.height = '150px';
+      ctx.scale(dpr, dpr);
+
+      let startAngle = -Math.PI / 2;
+      statusData.forEach(s => {
+        if (s.count === 0) return;
+        const slice = (s.count / totalChargers) * 2 * Math.PI;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, outerR, startAngle, startAngle + slice);
+        ctx.closePath();
+        ctx.fillStyle = s.color;
+        ctx.fill();
+        startAngle += slice;
+      });
+      // 도넛 구멍
+      ctx.beginPath();
+      ctx.arc(cx, cy, innerR, 0, 2 * Math.PI);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+      // 중앙 텍스트
+      ctx.fillStyle = '#1a202c';
+      ctx.font = `bold 22px 'Noto Sans KR', sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(totalChargers, cx, cy - 10);
+      ctx.font = `12px 'Noto Sans KR', sans-serif`;
+      ctx.fillStyle = '#aaa';
+      ctx.fillText('전체 충전기', cx, cy + 12);
+
+      // 상태 바 목록
       document.getElementById('statusSummary').innerHTML = statusData.map(s => `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0;">
-          <span class="badge ${s.cls}">${s.label}</span>
-          <div style="flex:1;margin:0 12px;height:8px;background:#f0f2f7;border-radius:4px;overflow:hidden;">
-            <div style="height:100%;width:${Math.round(s.count/totalChargers*100)}%;background:${s.color};border-radius:4px;"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0f0f0;">
+          <div style="display:flex;align-items:center;gap:7px;min-width:72px;">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${s.color};flex-shrink:0;"></span>
+            <span style="font-size:0.82rem;color:#555;">${s.label}</span>
           </div>
-          <strong style="min-width:40px;text-align:right;font-size:0.9rem;">${s.count}대</strong>
+          <div style="flex:1;margin:0 10px;height:7px;background:#f0f2f7;border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:${totalChargers ? Math.round(s.count/totalChargers*100) : 0}%;background:${s.color};border-radius:4px;transition:width 0.4s;"></div>
+          </div>
+          <strong style="min-width:36px;text-align:right;font-size:0.88rem;color:#333;">${s.count}<span style="font-weight:400;color:#aaa;font-size:0.78rem;">대</span></strong>
         </div>
       `).join('');
 
